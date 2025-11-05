@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="description" content="Suivez vos performances sportives - Musculation, Course, CrossFit, Hyrox">
+    <title>Suivi Performance</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+    <div id="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">Suivi Perf</h1>
+                <button class="btn-icon" id="menuBtn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="bottom-nav">
+            <button class="nav-btn active" data-view="dashboard">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                <span>Accueil</span>
+            </button>
+            <button class="nav-btn" data-view="workouts">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+                <span>Entraînements</span>
+            </button>
+            <button class="nav-btn" data-view="stats">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="20" x2="12" y2="10"></line>
+                    <line x1="18" y1="20" x2="18" y2="4"></line>
+                    <line x1="6" y1="20" x2="6" y2="16"></line>
+                </svg>
+                <span>Statistiques</span>
+            </button>
+            <button class="nav-btn" data-view="profile">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+                <span>Profil</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view active">
+                <div class="view-header">
+                    <h2>Tableau de bord</h2>
+                    <button class="btn-primary" id="addWorkoutBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Nouvel entraînement
+                    </button>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon musculation">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20.57 14.86L22 13.43 20.57 12 17 15.57 8.43 7 12 3.43 10.57 2 9.14 3.43 7.71 2 5.57 4.14 4.14 2.71 2.71 4.14l1.43 1.43L2 7.71l1.43 1.43L2 10.57 3.43 12 7 8.43 15.57 17 12 20.57 13.43 22l1.43-1.43L16.29 22l2.14-2.14 1.43 1.43 1.43-1.43-1.43-1.43L22 16.29z"/>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Musculation</p>
+                            <p class="stat-value" id="musculationCount">0</p>
+                            <p class="stat-subtitle">séances ce mois</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon running">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="13" cy="5" r="2"></circle>
+                                <path d="M6 12l1.5-2 2.5 2 4-5 2 2"></path>
+                                <path d="M16 14l-3 3-3-3-3 5h12l-3-5z"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Course / Trail</p>
+                            <p class="stat-value" id="runningCount">0</p>
+                            <p class="stat-subtitle">séances ce mois</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon crossfit">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+                                <path d="M9 9l6 6M15 9l-6 6"></path>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">CrossFit</p>
+                            <p class="stat-value" id="crossfitCount">0</p>
+                            <p class="stat-subtitle">séances ce mois</p>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon hyrox">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z"></path>
+                                <polyline points="8 12 12 16 16 12"></polyline>
+                            </svg>
+                        </div>
+                        <div class="stat-info">
+                            <p class="stat-label">Hyrox</p>
+                            <p class="stat-value" id="hyroxCount">0</p>
+                            <p class="stat-subtitle">séances ce mois</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <h3>Entraînements récents</h3>
+                    <div id="recentWorkouts" class="workouts-list">
+                        <div class="empty-state">
+                            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 6v6l4 2"></path>
+                            </svg>
+                            <p>Aucun entraînement enregistré</p>
+                            <p class="subtitle">Commencez à suivre vos performances</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Workouts View -->
+            <div id="workoutsView" class="view">
+                <div class="view-header">
+                    <h2>Entraînements</h2>
+                    <button class="btn-primary" id="addWorkoutBtn2">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Ajouter
+                    </button>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active" data-type="all">Tous</button>
+                    <button class="tab" data-type="musculation">Musculation</button>
+                    <button class="tab" data-type="running">Course</button>
+                    <button class="tab" data-type="crossfit">CrossFit</button>
+                    <button class="tab" data-type="hyrox">Hyrox</button>
+                </div>
+
+                <div id="allWorkouts" class="workouts-list">
+                    <div class="empty-state">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M12 6v6l4 2"></path>
+                        </svg>
+                        <p>Aucun entraînement</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats View -->
+            <div id="statsView" class="view">
+                <div class="view-header">
+                    <h2>Statistiques</h2>
+                </div>
+
+                <div class="stats-filter">
+                    <select id="statsType" class="select-input">
+                        <option value="all">Tous les sports</option>
+                        <option value="musculation">Musculation</option>
+                        <option value="running">Course / Trail</option>
+                        <option value="crossfit">CrossFit</option>
+                        <option value="hyrox">Hyrox</option>
+                    </select>
+                    <select id="statsPeriod" class="select-input">
+                        <option value="week">7 jours</option>
+                        <option value="month">30 jours</option>
+                        <option value="quarter">3 mois</option>
+                        <option value="year">1 an</option>
+                    </select>
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <h4>Volume total</h4>
+                        <p class="metric-value" id="totalVolume">0</p>
+                        <p class="metric-unit">séances</p>
+                    </div>
+                    <div class="metric-card">
+                        <h4>Progression</h4>
+                        <p class="metric-value" id="progression">0%</p>
+                        <p class="metric-unit">ce mois</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Profile View -->
+            <div id="profileView" class="view">
+                <div class="view-header">
+                    <h2>Profil</h2>
+                </div>
+
+                <div class="profile-section">
+                    <div class="profile-avatar">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="12" cy="7" r="4"></circle>
+                        </svg>
+                    </div>
+                    <h3 id="userName">Athlète</h3>
+                </div>
+
+                <div class="settings-list">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Marqueurs physiologiques</h4>
+                            <p>Force, VMA, Puissance</p>
+                        </div>
+                        <button class="btn-secondary" id="editMetricsBtn">Modifier</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Objectifs</h4>
+                            <p>Définir vos objectifs</p>
+                        </div>
+                        <button class="btn-secondary" id="editGoalsBtn">Modifier</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Exporter les données</h4>
+                            <p>Télécharger vos entraînements</p>
+                        </div>
+                        <button class="btn-secondary" id="exportBtn">Exporter</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal Add Workout -->
+        <div id="addWorkoutModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Nouvel entraînement</h3>
+                    <button class="btn-icon" id="closeModalBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <form id="workoutForm" class="form">
+                    <div class="form-group">
+                        <label>Type d'entraînement</label>
+                        <select id="workoutType" class="select-input" required>
+                            <option value="">Sélectionner...</option>
+                            <option value="musculation">Musculation</option>
+                            <option value="running">Course / Trail</option>
+                            <option value="crossfit">CrossFit</option>
+                            <option value="hyrox">Hyrox</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="workoutDate" class="input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Durée (minutes)</label>
+                        <input type="number" id="workoutDuration" class="input" min="1" required>
+                    </div>
+
+                    <!-- Musculation specific fields -->
+                    <div id="musculationFields" class="conditional-fields" style="display: none;">
+                        <div class="form-group">
+                            <label>Exercices</label>
+                            <textarea id="exercises" class="textarea" rows="3" placeholder="Ex: Squat 4x10 @100kg&#10;Développé couché 3x8 @80kg"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Volume total (kg)</label>
+                            <input type="number" id="totalVolume" class="input" min="0">
+                        </div>
+                    </div>
+
+                    <!-- Running specific fields -->
+                    <div id="runningFields" class="conditional-fields" style="display: none;">
+                        <div class="form-group">
+                            <label>Distance (km)</label>
+                            <input type="number" id="distance" class="input" step="0.1" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Temps</label>
+                            <input type="text" id="runTime" class="input" placeholder="HH:MM:SS">
+                        </div>
+                        <div class="form-group">
+                            <label>Dénivelé (m)</label>
+                            <input type="number" id="elevation" class="input" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>Allure moyenne (min/km)</label>
+                            <input type="text" id="pace" class="input" placeholder="5:30">
+                        </div>
+                    </div>
+
+                    <!-- CrossFit specific fields -->
+                    <div id="crossfitFields" class="conditional-fields" style="display: none;">
+                        <div class="form-group">
+                            <label>WOD</label>
+                            <textarea id="wod" class="textarea" rows="3" placeholder="Décrivez le WOD"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Score/Temps</label>
+                            <input type="text" id="wodScore" class="input" placeholder="Ex: 15:30 ou 45 reps">
+                        </div>
+                    </div>
+
+                    <!-- Hyrox specific fields -->
+                    <div id="hyroxFields" class="conditional-fields" style="display: none;">
+                        <div class="form-group">
+                            <label>Type de session</label>
+                            <select id="hyroxType" class="select-input">
+                                <option value="full">Complet</option>
+                                <option value="simulation">Simulation</option>
+                                <option value="specific">Spécifique</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Temps total</label>
+                            <input type="text" id="hyroxTime" class="input" placeholder="HH:MM:SS">
+                        </div>
+                        <div class="form-group">
+                            <label>Détails</label>
+                            <textarea id="hyroxDetails" class="textarea" rows="3" placeholder="Temps par station, exercices..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Notes</label>
+                        <textarea id="notes" class="textarea" rows="2" placeholder="Ressenti, observations..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelBtn">Annuler</button>
+                        <button type="submit" class="btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
