@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aide - Suivi Performance</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .status {
+            background: rgba(16, 185, 129, 0.2);
+            border: 2px solid #10b981;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .status h2 {
+            color: #10b981;
+            margin-bottom: 10px;
+        }
+        .btn {
+            display: inline-block;
+            background: white;
+            color: #667eea;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .instructions {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            margin-bottom: 15px;
+            color: #fbbf24;
+        }
+        .instructions ol {
+            margin-left: 20px;
+        }
+        .instructions li {
+            margin: 10px 0;
+            line-height: 1.6;
+        }
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .center {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏋️ Suivi Performance</h1>
+
+        <div class="status">
+            <h2>✅ Serveur démarré !</h2>
+            <p>L'application fonctionne correctement</p>
+        </div>
+
+        <div class="center">
+            <a href="/" class="btn">🚀 Ouvrir l'application</a>
+        </div>
+
+        <div class="instructions">
+            <h3>📱 Accès depuis votre téléphone</h3>
+            <ol>
+                <li>Assurez-vous d'être sur le <strong>même réseau WiFi</strong></li>
+                <li>Trouvez l'adresse IP de cet ordinateur :
+                    <ul style="margin: 10px 0;">
+                        <li>Windows : <code>ipconfig</code></li>
+                        <li>Mac/Linux : <code>ifconfig</code></li>
+                    </ul>
+                </li>
+                <li>Sur votre téléphone, ouvrez le navigateur</li>
+                <li>Tapez : <code>http://IP_ADDRESS:8000</code></li>
+                <li>Exemple : <code>http://192.168.1.45:8000</code></li>
+            </ol>
+        </div>
+
+        <div class="instructions">
+            <h3>🎯 Guide rapide</h3>
+            <ol>
+                <li><strong>Tableau de bord</strong> : Vue d'ensemble de vos entraînements</li>
+                <li><strong>Nouvel entraînement</strong> : Cliquez sur le bouton "+" pour ajouter une séance</li>
+                <li><strong>Choisissez le type</strong> : Musculation, Course, CrossFit ou Hyrox</li>
+                <li><strong>Remplissez les champs</strong> qui s'affichent automatiquement</li>
+                <li><strong>Enregistrez</strong> et consultez vos statistiques !</li>
+            </ol>
+        </div>
+
+        <div class="instructions">
+            <h3>💾 Stockage des données</h3>
+            <p>Toutes vos données sont stockées <strong>localement</strong> dans votre navigateur (IndexedDB).
+            Aucune connexion internet n'est nécessaire après le premier chargement.</p>
+        </div>
+
+        <div class="center" style="margin-top: 30px;">
+            <a href="/" class="btn">➡️ Commencer maintenant</a>
+        </div>
+    </div>
+
+    <script>
+        // Auto-redirect après 5 secondes
+        setTimeout(() => {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!urlParams.has('noredirect')) {
+                window.location.href = '/';
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
