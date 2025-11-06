@@ -691,3 +691,284 @@ body {
         padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom));
     }
 }
+
+/* Side Menu */
+.side-menu {
+    position: fixed;
+    top: 0;
+    left: -300px;
+    width: 300px;
+    height: 100vh;
+    background: var(--bg-secondary);
+    z-index: 200;
+    transition: left 0.3s ease;
+    box-shadow: 4px 0 20px var(--shadow);
+}
+
+.side-menu.active {
+    left: 0;
+}
+
+.side-menu-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.side-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    border-bottom: 1px solid var(--border);
+}
+
+.side-menu-header h2 {
+    font-size: 20px;
+}
+
+.side-menu-nav {
+    flex: 1;
+    padding: 20px 0;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.menu-item:hover,
+.menu-item:active {
+    background: var(--bg-tertiary);
+    color: var(--text);
+}
+
+.menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 150;
+}
+
+.menu-overlay.active {
+    display: block;
+}
+
+/* Calendar */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 24px 0 16px;
+}
+
+.calendar-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.calendar {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 20px;
+}
+
+.calendar-days-header {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.calendar-day-name {
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 8px 0;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 13px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.calendar-day:hover {
+    background: var(--bg-tertiary);
+}
+
+.calendar-day.other-month {
+    color: var(--text-muted);
+    opacity: 0.3;
+}
+
+.calendar-day.today {
+    background: rgba(99, 102, 241, 0.2);
+    border: 2px solid var(--primary);
+}
+
+.calendar-day.has-workout {
+    background: var(--bg-tertiary);
+}
+
+.workout-dots {
+    display: flex;
+    gap: 2px;
+    margin-top: 2px;
+}
+
+.workout-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+}
+
+.workout-dot.musculation { background: var(--musculation-color); }
+.workout-dot.running { background: var(--running-color); }
+.workout-dot.crossfit { background: var(--crossfit-color); }
+.workout-dot.hyrox { background: var(--hyrox-color); }
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.legend-dot.musculation { background: var(--musculation-color); }
+.legend-dot.running { background: var(--running-color); }
+.legend-dot.crossfit { background: var(--crossfit-color); }
+.legend-dot.hyrox { background: var(--hyrox-color); }
+
+/* Goals Section */
+.goals-section {
+    margin-bottom: 24px;
+}
+
+.goal-card {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+    color: white;
+}
+
+.goal-card h4 {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.goal-card p {
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.goal-date {
+    font-size: 12px;
+    margin-top: 8px;
+    opacity: 0.8;
+}
+
+/* Filters Row */
+.filters-row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.filters-row .tabs {
+    flex: 1;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.select-input-small {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 13px;
+    cursor: pointer;
+    min-width: 130px;
+}
+
+/* Stats improvements */
+.stats-filter {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+/* Profile improvements */
+.user-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 8px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+    .filters-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .filters-row .tabs {
+        overflow-x: auto;
+    }
+
+    .stats-filter {
+        grid-template-columns: 1fr;
+    }
+
+    .bottom-nav {
+        padding: 0 4px;
+    }
+
+    .nav-btn {
+        padding: 8px 6px;
+        font-size: 10px;
+    }
+}

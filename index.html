@@ -26,6 +26,55 @@
             </div>
         </header>
 
+        <!-- Side Menu -->
+        <div id="sideMenu" class="side-menu">
+            <div class="side-menu-content">
+                <div class="side-menu-header">
+                    <h2>Menu</h2>
+                    <button class="btn-icon" id="closeMenuBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <nav class="side-menu-nav">
+                    <a href="#" class="menu-item" data-action="export">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                        </svg>
+                        Exporter les données
+                    </a>
+                    <a href="#" class="menu-item" data-action="import">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                        Importer des données
+                    </a>
+                    <a href="#" class="menu-item" data-action="settings">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"></path>
+                        </svg>
+                        Paramètres
+                    </a>
+                    <a href="#" class="menu-item" data-action="about">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        À propos
+                    </a>
+                </nav>
+            </div>
+        </div>
+        <div id="menuOverlay" class="menu-overlay"></div>
+
         <!-- Navigation -->
         <nav class="bottom-nav">
             <button class="nav-btn active" data-view="dashboard">
@@ -41,7 +90,16 @@
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                 </svg>
-                <span>Entraînements</span>
+                <span>Séances</span>
+            </button>
+            <button class="nav-btn" data-view="program">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                <span>Programme</span>
             </button>
             <button class="nav-btn" data-view="stats">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -49,7 +107,7 @@
                     <line x1="18" y1="20" x2="18" y2="4"></line>
                     <line x1="6" y1="20" x2="6" y2="16"></line>
                 </svg>
-                <span>Statistiques</span>
+                <span>Stats</span>
             </button>
             <button class="nav-btn" data-view="profile">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -151,7 +209,7 @@
             <!-- Workouts View -->
             <div id="workoutsView" class="view">
                 <div class="view-header">
-                    <h2>Entraînements</h2>
+                    <h2>Séances</h2>
                     <button class="btn-primary" id="addWorkoutBtn2">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -161,12 +219,19 @@
                     </button>
                 </div>
 
-                <div class="tabs">
-                    <button class="tab active" data-type="all">Tous</button>
-                    <button class="tab" data-type="musculation">Musculation</button>
-                    <button class="tab" data-type="running">Course</button>
-                    <button class="tab" data-type="crossfit">CrossFit</button>
-                    <button class="tab" data-type="hyrox">Hyrox</button>
+                <div class="filters-row">
+                    <div class="tabs">
+                        <button class="tab active" data-type="all">Tous</button>
+                        <button class="tab" data-type="musculation">Muscu</button>
+                        <button class="tab" data-type="running">Course</button>
+                        <button class="tab" data-type="crossfit">CrossFit</button>
+                        <button class="tab" data-type="hyrox">Hyrox</button>
+                    </div>
+                    <select id="workoutSort" class="select-input-small">
+                        <option value="recent">Plus récent</option>
+                        <option value="oldest">Plus ancien</option>
+                        <option value="type">Par type</option>
+                    </select>
                 </div>
 
                 <div id="allWorkouts" class="workouts-list">
@@ -176,6 +241,61 @@
                             <path d="M12 6v6l4 2"></path>
                         </svg>
                         <p>Aucun entraînement</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Program View -->
+            <div id="programView" class="view">
+                <div class="view-header">
+                    <h2>Programme</h2>
+                    <button class="btn-primary" id="addGoalBtn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Objectif
+                    </button>
+                </div>
+
+                <div id="goalsSection" class="goals-section">
+                    <!-- Goals will be displayed here -->
+                </div>
+
+                <div class="calendar-header">
+                    <button class="btn-icon" id="prevMonth">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="15 18 9 12 15 6"></polyline>
+                        </svg>
+                    </button>
+                    <h3 id="currentMonth">Novembre 2025</h3>
+                    <button class="btn-icon" id="nextMonth">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </button>
+                </div>
+
+                <div id="calendar" class="calendar">
+                    <!-- Calendar will be generated here -->
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <span class="legend-dot musculation"></span>
+                        <span>Musculation</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot running"></span>
+                        <span>Course</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot crossfit"></span>
+                        <span>CrossFit</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="legend-dot hyrox"></span>
+                        <span>Hyrox</span>
                     </div>
                 </div>
             </div>
@@ -200,10 +320,32 @@
                         <option value="quarter">3 mois</option>
                         <option value="year">1 an</option>
                     </select>
+                    <select id="statsAggregation" class="select-input">
+                        <option value="day">Par jour</option>
+                        <option value="week">Par semaine</option>
+                        <option value="month">Par mois</option>
+                    </select>
                 </div>
 
-                <div class="chart-container">
-                    <canvas id="performanceChart"></canvas>
+                <div class="section">
+                    <h3>Fréquence d'entraînement</h3>
+                    <div class="chart-container">
+                        <canvas id="frequencyChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="section" id="volumeSection" style="display: none;">
+                    <h3>Évolution de la charge</h3>
+                    <div class="chart-container">
+                        <canvas id="volumeChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="section" id="performanceSection" style="display: none;">
+                    <h3>Marqueurs physiologiques</h3>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
                 </div>
 
                 <div class="metrics-grid">
@@ -216,6 +358,16 @@
                         <h4>Progression</h4>
                         <p class="metric-value" id="progression">0%</p>
                         <p class="metric-unit">ce mois</p>
+                    </div>
+                    <div class="metric-card" id="specificMetric1" style="display: none;">
+                        <h4 id="metric1Label">-</h4>
+                        <p class="metric-value" id="metric1Value">0</p>
+                        <p class="metric-unit" id="metric1Unit">-</p>
+                    </div>
+                    <div class="metric-card" id="specificMetric2" style="display: none;">
+                        <h4 id="metric2Label">-</h4>
+                        <p class="metric-value" id="metric2Value">0</p>
+                        <p class="metric-unit" id="metric2Unit">-</p>
                     </div>
                 </div>
             </div>
@@ -234,20 +386,35 @@
                         </svg>
                     </div>
                     <h3 id="userName">Athlète</h3>
+                    <p class="user-subtitle" id="userSubtitle">Configurez votre profil</p>
                 </div>
 
                 <div class="settings-list">
                     <div class="setting-item">
                         <div class="setting-info">
+                            <h4>Informations personnelles</h4>
+                            <p id="userInfoDisplay">Nom, âge, sexe</p>
+                        </div>
+                        <button class="btn-secondary" id="editUserInfoBtn">Modifier</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Données anthropométriques</h4>
+                            <p id="anthropoDisplay">Poids, taille, IMC</p>
+                        </div>
+                        <button class="btn-secondary" id="editAnthropoBtn">Modifier</button>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
                             <h4>Marqueurs physiologiques</h4>
-                            <p>Force, VMA, Puissance</p>
+                            <p id="metricsDisplay">Force, VMA, Puissance</p>
                         </div>
                         <button class="btn-secondary" id="editMetricsBtn">Modifier</button>
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <h4>Objectifs</h4>
-                            <p>Définir vos objectifs</p>
+                            <p id="goalsDisplay">Définir vos objectifs</p>
                         </div>
                         <button class="btn-secondary" id="editGoalsBtn">Modifier</button>
                     </div>

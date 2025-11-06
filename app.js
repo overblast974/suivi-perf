@@ -2,7 +2,7 @@
 class DatabaseManager {
     constructor() {
         this.dbName = 'SuiviPerfDB';
-        this.version = 1;
+        this.version = 2;  // Increased version for new stores
         this.db = null;
     }
 
@@ -25,8 +25,8 @@ class DatabaseManager {
                     workoutStore.createIndex('date', 'date', { unique: false });
                 }
 
-                if (!db.objectStoreNames.contains('metrics')) {
-                    db.createObjectStore('metrics', { keyPath: 'id', autoIncrement: true });
+                if (!db.objectStoreNames.contains('profile')) {
+                    db.createObjectStore('profile', { keyPath: 'id' });
                 }
 
                 if (!db.objectStoreNames.contains('goals')) {
@@ -83,6 +83,50 @@ class DatabaseManager {
             request.onerror = () => reject(request.error);
         });
     }
+
+    async getProfile() {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['profile'], 'readonly');
+            const store = transaction.objectStore('profile');
+            const request = store.get('user');
+
+            request.onsuccess = () => resolve(request.result || {});
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async saveProfile(data) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['profile'], 'readwrite');
+            const store = transaction.objectStore('profile');
+            const request = store.put({ id: 'user', ...data });
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async addGoal(goal) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['goals'], 'readwrite');
+            const store = transaction.objectStore('goals');
+            const request = store.add(goal);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async getAllGoals() {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['goals'], 'readonly');
+            const store = transaction.objectStore('goals');
+            const request = store.getAll();
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
 }
 
 // App Manager
@@ -91,7 +135,16 @@ class App {
         this.db = new DatabaseManager();
         this.currentView = 'dashboard';
         this.currentFilter = 'all';
-        this.chart = null;
+        this.currentSort = 'recent';
+        this.charts = {
+            frequency: null,
+            volume: null,
+            performance: null
+        };
+        this.calendar = {
+            currentMonth: new Date().getMonth(),
+            currentYear: new Date().getFullYear()
+        };
         this.init();
     }
 
@@ -100,6 +153,7 @@ class App {
             await this.db.init();
             this.setupEventListeners();
             this.setupFormHandling();
+            this.setupMenu();
             this.loadDashboard();
             this.setTodayDate();
         } catch (error) {
@@ -144,12 +198,95 @@ class App {
             });
         });
 
+        // Workout sort
+        const sortSelect = document.getElementById('workoutSort');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', (e) => {
+                this.currentSort = e.target.value;
+                this.loadWorkouts();
+            });
+        }
+
         // Stats filters
-        document.getElementById('statsType').addEventListener('change', () => this.updateChart());
-        document.getElementById('statsPeriod').addEventListener('change', () => this.updateChart());
+        document.getElementById('statsType').addEventListener('change', () => this.updateStats());
+        document.getElementById('statsPeriod').addEventListener('change', () => this.updateStats());
+        const statsAgg = document.getElementById('statsAggregation');
+        if (statsAgg) {
+            statsAgg.addEventListener('change', () => this.updateStats());
+        }
 
         // Export button
         document.getElementById('exportBtn').addEventListener('click', () => this.exportData());
+
+        // Calendar controls
+        const prevMonth = document.getElementById('prevMonth');
+        const nextMonth = document.getElementById('nextMonth');
+        if (prevMonth && nextMonth) {
+            prevMonth.addEventListener('click', () => this.changeMonth(-1));
+            nextMonth.addEventListener('click', () => this.changeMonth(1));
+        }
+
+        // Profile buttons
+        const editUserInfoBtn = document.getElementById('editUserInfoBtn');
+        const editAnthropoBtn = document.getElementById('editAnthropoBtn');
+        const editMetricsBtn = document.getElementById('editMetricsBtn');
+        const editGoalsBtn = document.getElementById('editGoalsBtn');
+
+        if (editUserInfoBtn) editUserInfoBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
+        if (editAnthropoBtn) editAnthropoBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
+        if (editMetricsBtn) editMetricsBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
+        if (editGoalsBtn) editGoalsBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
+
+        // Goal button
+        const addGoalBtn = document.getElementById('addGoalBtn');
+        if (addGoalBtn) {
+            addGoalBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
+        }
+    }
+
+    setupMenu() {
+        const menuBtn = document.getElementById('menuBtn');
+        const closeMenuBtn = document.getElementById('closeMenuBtn');
+        const sideMenu = document.getElementById('sideMenu');
+        const menuOverlay = document.getElementById('menuOverlay');
+
+        const openMenu = () => {
+            sideMenu.classList.add('active');
+            menuOverlay.classList.add('active');
+        };
+
+        const closeMenu = () => {
+            sideMenu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+        };
+
+        menuBtn.addEventListener('click', openMenu);
+        closeMenuBtn.addEventListener('click', closeMenu);
+        menuOverlay.addEventListener('click', closeMenu);
+
+        // Menu actions
+        document.querySelectorAll('.menu-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const action = e.currentTarget.dataset.action;
+                closeMenu();
+
+                switch(action) {
+                    case 'export':
+                        this.exportData();
+                        break;
+                    case 'import':
+                        this.showToast('Fonctionnalité en développement');
+                        break;
+                    case 'settings':
+                        this.switchView('profile');
+                        break;
+                    case 'about':
+                        this.showToast('Suivi Performance v1.0');
+                        break;
+                }
+            });
+        });
     }
 
     setupFormHandling() {
@@ -186,6 +323,9 @@ class App {
                 break;
             case 'workouts':
                 this.loadWorkouts();
+                break;
+            case 'program':
+                this.loadProgram();
                 break;
             case 'stats':
                 this.loadStats();
@@ -301,6 +441,7 @@ class App {
             tab.classList.toggle('active', tab.dataset.type === type);
         });
 
+        this.currentFilter = type;
         const workouts = type === 'all'
             ? await this.db.getAllWorkouts()
             : await this.db.getWorkoutsByType(type);
@@ -310,7 +451,20 @@ class App {
 
     displayWorkouts(workouts, type) {
         const container = document.getElementById('allWorkouts');
-        const sorted = workouts.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Sort workouts
+        let sorted = [...workouts];
+        switch(this.currentSort) {
+            case 'recent':
+                sorted.sort((a, b) => new Date(b.date) - new Date(a.date));
+                break;
+            case 'oldest':
+                sorted.sort((a, b) => new Date(a.date) - new Date(b.date));
+                break;
+            case 'type':
+                sorted.sort((a, b) => a.type.localeCompare(b.type));
+                break;
+        }
 
         if (sorted.length === 0) {
             container.innerHTML = `
@@ -328,90 +482,225 @@ class App {
         container.innerHTML = sorted.map(workout => this.createWorkoutCard(workout)).join('');
     }
 
-    async loadStats() {
+    async loadProgram() {
+        this.renderCalendar();
+    }
+
+    async renderCalendar() {
+        const { currentMonth, currentYear } = this.calendar;
+        const monthNames = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+                           'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+        document.getElementById('currentMonth').textContent =
+            `${monthNames[currentMonth]} ${currentYear}`;
+
         const workouts = await this.db.getAllWorkouts();
 
+        // Get first day of month and number of days
+        const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+        const calendar = document.getElementById('calendar');
+        let html = `
+            <div class="calendar-days-header">
+                ${['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map(day =>
+                    `<div class="calendar-day-name">${day}</div>`
+                ).join('')}
+            </div>
+            <div class="calendar-grid">
+        `;
+
+        // Adjust for Monday start (0 = Sunday in JS)
+        const adjustedFirstDay = firstDay === 0 ? 6 : firstDay - 1;
+
+        // Previous month days
+        const prevMonthDays = new Date(currentYear, currentMonth, 0).getDate();
+        for (let i = adjustedFirstDay - 1; i >= 0; i--) {
+            html += `<div class="calendar-day other-month">${prevMonthDays - i}</div>`;
+        }
+
+        // Current month days
+        const today = new Date();
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            const dayWorkouts = workouts.filter(w => w.date === dateStr);
+
+            const isToday = today.getDate() === day &&
+                           today.getMonth() === currentMonth &&
+                           today.getFullYear() === currentYear;
+
+            const classes = ['calendar-day'];
+            if (isToday) classes.push('today');
+            if (dayWorkouts.length > 0) classes.push('has-workout');
+
+            html += `
+                <div class="${classes.join(' ')}">
+                    <span>${day}</span>
+                    ${dayWorkouts.length > 0 ? `
+                        <div class="workout-dots">
+                            ${dayWorkouts.slice(0, 4).map(w =>
+                                `<div class="workout-dot ${w.type}"></div>`
+                            ).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        html += `</div>`;
+        calendar.innerHTML = html;
+    }
+
+    changeMonth(delta) {
+        this.calendar.currentMonth += delta;
+        if (this.calendar.currentMonth < 0) {
+            this.calendar.currentMonth = 11;
+            this.calendar.currentYear--;
+        } else if (this.calendar.currentMonth > 11) {
+            this.calendar.currentMonth = 0;
+            this.calendar.currentYear++;
+        }
+        this.renderCalendar();
+    }
+
+    async loadStats() {
+        await this.updateStats();
+    }
+
+    async updateStats() {
+        const type = document.getElementById('statsType').value;
+        const period = document.getElementById('statsPeriod').value;
+        const aggregation = document.getElementById('statsAggregation')?.value || 'day';
+
+        const workouts = await this.db.getAllWorkouts();
+        let filtered = type === 'all' ? workouts : workouts.filter(w => w.type === type);
+
+        // Filter by period
+        const now = new Date();
+        const days = period === 'week' ? 7 : period === 'month' ? 30 :
+                    period === 'quarter' ? 90 : 365;
+
+        const startDate = new Date(now);
+        startDate.setDate(startDate.getDate() - days);
+
+        filtered = filtered.filter(w => new Date(w.date) >= startDate);
+
         // Update metrics
-        document.getElementById('totalVolume').textContent = workouts.length;
+        document.getElementById('totalVolume').textContent = filtered.length;
 
-        // Calculate progression (comparison with previous month)
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
-        const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-        const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+        // Calculate progression
+        const midDate = new Date(startDate);
+        midDate.setDate(midDate.getDate() + days / 2);
 
-        const thisMonth = workouts.filter(w => {
-            const date = new Date(w.date);
-            return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-        }).length;
-
-        const previousMonth = workouts.filter(w => {
-            const date = new Date(w.date);
-            return date.getMonth() === lastMonth && date.getFullYear() === lastMonthYear;
-        }).length;
-
-        const progression = previousMonth === 0 ? 100 :
-            Math.round(((thisMonth - previousMonth) / previousMonth) * 100);
+        const firstHalf = filtered.filter(w => new Date(w.date) < midDate).length;
+        const secondHalf = filtered.filter(w => new Date(w.date) >= midDate).length;
+        const progression = firstHalf === 0 ? 100 :
+            Math.round(((secondHalf - firstHalf) / firstHalf) * 100);
 
         document.getElementById('progression').textContent =
             progression > 0 ? `+${progression}%` : `${progression}%`;
 
-        // Update chart
-        this.updateChart();
+        // Update charts
+        this.updateFrequencyChart(filtered, aggregation);
+
+        // Show/hide type-specific sections
+        const volumeSection = document.getElementById('volumeSection');
+        const performanceSection = document.getElementById('performanceSection');
+
+        if (type !== 'all') {
+            volumeSection.style.display = 'block';
+            performanceSection.style.display = 'block';
+            this.updateVolumeChart(filtered, type, aggregation);
+            this.updatePerformanceChart(filtered, type);
+        } else {
+            volumeSection.style.display = 'none';
+            performanceSection.style.display = 'none';
+        }
     }
 
-    updateChart() {
-        const type = document.getElementById('statsType').value;
-        const period = document.getElementById('statsPeriod').value;
+    updateFrequencyChart(workouts, aggregation) {
+        const canvas = document.getElementById('frequencyChart');
+        if (!canvas) return;
 
-        this.db.getAllWorkouts().then(workouts => {
-            let filtered = type === 'all' ? workouts : workouts.filter(w => w.type === type);
+        const ctx = canvas.getContext('2d');
 
-            // Filter by period
-            const now = new Date();
-            const days = period === 'week' ? 7 : period === 'month' ? 30 :
-                        period === 'quarter' ? 90 : 365;
+        if (this.charts.frequency) {
+            this.charts.frequency.destroy();
+        }
 
-            const startDate = new Date(now);
-            startDate.setDate(startDate.getDate() - days);
+        const grouped = this.groupWorkoutsByPeriod(workouts, aggregation);
 
-            filtered = filtered.filter(w => new Date(w.date) >= startDate);
-
-            // Group by date
-            const grouped = {};
-            filtered.forEach(w => {
-                const date = new Date(w.date).toLocaleDateString('fr-FR');
-                grouped[date] = (grouped[date] || 0) + 1;
-            });
-
-            // Prepare chart data
-            const labels = Object.keys(grouped).sort((a, b) =>
-                new Date(a.split('/').reverse().join('-')) -
-                new Date(b.split('/').reverse().join('-'))
-            );
-            const data = labels.map(label => grouped[label]);
-
-            this.renderChart(labels, data);
+        this.charts.frequency = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: grouped.labels,
+                datasets: [{
+                    label: 'Entraînements',
+                    data: grouped.data,
+                    backgroundColor: 'rgba(99, 102, 241, 0.7)',
+                    borderColor: '#6366f1',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, color: '#64748b' },
+                        grid: { color: '#334155' }
+                    },
+                    x: {
+                        ticks: { color: '#64748b', maxRotation: 45, minRotation: 45 },
+                        grid: { color: '#334155' }
+                    }
+                }
+            }
         });
     }
 
-    renderChart(labels, data) {
-        const canvas = document.getElementById('performanceChart');
+    updateVolumeChart(workouts, type, aggregation) {
+        const canvas = document.getElementById('volumeChart');
+        if (!canvas) return;
+
         const ctx = canvas.getContext('2d');
 
-        if (this.chart) {
-            this.chart.destroy();
+        if (this.charts.volume) {
+            this.charts.volume.destroy();
         }
 
-        this.chart = new Chart(ctx, {
+        let data, label;
+
+        if (type === 'musculation') {
+            const grouped = this.groupDataByPeriod(workouts, aggregation, 'totalVolume');
+            data = grouped.data;
+            label = 'Volume (kg)';
+        } else if (type === 'running') {
+            const grouped = this.groupDataByPeriod(workouts, aggregation, 'distance');
+            data = grouped.data;
+            label = 'Distance (km)';
+        } else {
+            const grouped = this.groupWorkoutsByPeriod(workouts, aggregation);
+            data = grouped.data;
+            label = 'Séances';
+        }
+
+        const grouped = this.groupDataByPeriod(workouts, aggregation,
+            type === 'musculation' ? 'totalVolume' : type === 'running' ? 'distance' : null);
+
+        this.charts.volume = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: grouped.labels,
                 datasets: [{
-                    label: 'Entraînements',
-                    data: data,
-                    borderColor: '#6366f1',
-                    backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                    label: label,
+                    data: grouped.data,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
                     tension: 0.4,
                     fill: true
                 }]
@@ -420,38 +709,157 @@ class App {
                 responsive: true,
                 maintainAspectRatio: true,
                 plugins: {
-                    legend: {
-                        display: false
-                    }
+                    legend: { display: true, labels: { color: '#cbd5e1' } }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            stepSize: 1,
-                            color: '#64748b'
-                        },
-                        grid: {
-                            color: '#334155'
-                        }
+                        ticks: { color: '#64748b' },
+                        grid: { color: '#334155' }
                     },
                     x: {
-                        ticks: {
-                            color: '#64748b',
-                            maxRotation: 45,
-                            minRotation: 45
-                        },
-                        grid: {
-                            color: '#334155'
-                        }
+                        ticks: { color: '#64748b', maxRotation: 45, minRotation: 45 },
+                        grid: { color: '#334155' }
                     }
                 }
             }
         });
     }
 
-    loadProfile() {
-        // Profile is static for now
+    updatePerformanceChart(workouts, type) {
+        const canvas = document.getElementById('performanceChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+
+        if (this.charts.performance) {
+            this.charts.performance.destroy();
+        }
+
+        // This is a placeholder - real implementation would track specific metrics
+        const labels = workouts.map(w => new Date(w.date).toLocaleDateString('fr-FR'));
+        const data = workouts.map((w, i) => Math.random() * 100); // Placeholder data
+
+        this.charts.performance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Performance',
+                    data: data,
+                    borderColor: '#f59e0b',
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: { display: true, labels: { color: '#cbd5e1' } }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { color: '#64748b' },
+                        grid: { color: '#334155' }
+                    },
+                    x: {
+                        ticks: { color: '#64748b', maxRotation: 45, minRotation: 45 },
+                        grid: { color: '#334155' }
+                    }
+                }
+            }
+        });
+    }
+
+    groupWorkoutsByPeriod(workouts, period) {
+        const grouped = {};
+
+        workouts.forEach(w => {
+            const date = new Date(w.date);
+            let key;
+
+            if (period === 'day') {
+                key = date.toLocaleDateString('fr-FR');
+            } else if (period === 'week') {
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay());
+                key = weekStart.toLocaleDateString('fr-FR');
+            } else {
+                key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            }
+
+            grouped[key] = (grouped[key] || 0) + 1;
+        });
+
+        const labels = Object.keys(grouped).sort((a, b) => {
+            if (period === 'month') {
+                return a.localeCompare(b);
+            }
+            return new Date(a.split('/').reverse().join('-')) -
+                   new Date(b.split('/').reverse().join('-'));
+        });
+
+        return {
+            labels: labels,
+            data: labels.map(label => grouped[label])
+        };
+    }
+
+    groupDataByPeriod(workouts, period, field) {
+        const grouped = {};
+
+        workouts.forEach(w => {
+            const date = new Date(w.date);
+            let key;
+
+            if (period === 'day') {
+                key = date.toLocaleDateString('fr-FR');
+            } else if (period === 'week') {
+                const weekStart = new Date(date);
+                weekStart.setDate(date.getDate() - date.getDay());
+                key = weekStart.toLocaleDateString('fr-FR');
+            } else {
+                key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+            }
+
+            if (!grouped[key]) grouped[key] = { sum: 0, count: 0 };
+            grouped[key].sum += (field && w[field]) ? parseFloat(w[field]) : 1;
+            grouped[key].count += 1;
+        });
+
+        const labels = Object.keys(grouped).sort((a, b) => {
+            if (period === 'month') {
+                return a.localeCompare(b);
+            }
+            return new Date(a.split('/').reverse().join('-')) -
+                   new Date(b.split('/').reverse().join('-'));
+        });
+
+        return {
+            labels: labels,
+            data: labels.map(label => grouped[label].sum)
+        };
+    }
+
+    async loadProfile() {
+        const profile = await this.db.getProfile();
+
+        if (profile.name) {
+            document.getElementById('userName').textContent = profile.name;
+        }
+
+        // Display profile data if available
+        if (profile.userInfo) {
+            document.getElementById('userInfoDisplay').textContent =
+                `${profile.userInfo.name || ''}, ${profile.userInfo.age || ''} ans`;
+        }
+
+        if (profile.anthropo) {
+            document.getElementById('anthropoDisplay').textContent =
+                `${profile.anthropo.weight || ''} kg, ${profile.anthropo.height || ''} cm`;
+        }
     }
 
     openModal() {
@@ -510,7 +918,7 @@ class App {
         } else if (type === 'hyrox') {
             workout.hyroxType = document.getElementById('hyroxType').value;
             workout.hyroxTime = document.getElementById('hyroxTime').value;
-            workout.wodScore = document.getElementById('hyroxTime').value; // For display purposes
+            workout.wodScore = document.getElementById('hyroxTime').value;
             workout.hyroxDetails = document.getElementById('hyroxDetails').value;
         }
 
@@ -526,12 +934,14 @@ class App {
                 case 'workouts':
                     this.loadWorkouts();
                     break;
+                case 'program':
+                    this.loadProgram();
+                    break;
                 case 'stats':
                     this.loadStats();
                     break;
             }
 
-            // Show success message
             this.showToast('Entraînement ajouté avec succès!');
         } catch (error) {
             console.error('Erreur lors de l\'ajout:', error);
@@ -540,7 +950,6 @@ class App {
     }
 
     showToast(message, type = 'success') {
-        // Create toast element
         const toast = document.createElement('div');
         toast.style.cssText = `
             position: fixed;
