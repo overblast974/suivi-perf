@@ -713,6 +713,68 @@ body {
     line-height: 1.6;
 }
 
+/* Workout Details Modal */
+.workout-details-content {
+    padding: 20px 0;
+}
+
+.workout-detail-section {
+    margin-bottom: 24px;
+}
+
+.workout-detail-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.workout-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+}
+
+.workout-detail-item {
+    background: var(--bg-tertiary);
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.workout-detail-item .label {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.workout-detail-item .value {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.exercise-detail-item {
+    background: var(--bg-tertiary);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.exercise-detail-item .exercise-name-detail {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--text);
+    margin-bottom: 8px;
+}
+
+.exercise-detail-item .sets-detail {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
 /* Profile */
 .profile-section {
     display: flex;

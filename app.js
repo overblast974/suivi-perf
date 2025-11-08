@@ -295,6 +295,20 @@ class App {
         if (closeMetricsModalBtn) closeMetricsModalBtn.addEventListener('click', () => this.closeMetricsModal());
         if (cancelMetricsBtn) cancelMetricsBtn.addEventListener('click', () => this.closeMetricsModal());
 
+        // Workout details modal controls
+        const closeDetailsModalBtn = document.getElementById('closeDetailsModalBtn');
+        if (closeDetailsModalBtn) closeDetailsModalBtn.addEventListener('click', () => this.closeWorkoutDetailsModal());
+
+        // Click outside modal to close
+        const workoutDetailsModal = document.getElementById('workoutDetailsModal');
+        if (workoutDetailsModal) {
+            workoutDetailsModal.addEventListener('click', (e) => {
+                if (e.target.id === 'workoutDetailsModal') {
+                    this.closeWorkoutDetailsModal();
+                }
+            });
+        }
+
         // Goal button
         const addGoalBtn = document.getElementById('addGoalBtn');
         if (addGoalBtn) {
@@ -734,11 +748,12 @@ class App {
             }
         }
 
-        const clickHandler = isPlanned ? `data-workout-id="${workout.id}"` : '';
-        const cursorStyle = isPlanned ? 'cursor: pointer;' : '';
+        const clickHandler = `data-workout-id="${workout.id}"`;
+        const cursorStyle = 'cursor: pointer;';
+        const cardClass = isPlanned ? 'planned' : 'completed';
 
         return `
-            <div class="workout-card ${isPlanned ? 'planned' : ''}" ${clickHandler} style="${cursorStyle}">
+            <div class="workout-card ${cardClass}" ${clickHandler} style="${cursorStyle}">
                 <div class="workout-header">
                     <div class="workout-type">
                         <span class="workout-type-badge ${workout.type}"></span>
@@ -830,6 +845,16 @@ class App {
                 const workoutId = parseInt(e.currentTarget.dataset.workoutId);
                 if (workoutId) {
                     await this.openValidationModal(workoutId);
+                }
+            });
+        });
+
+        // Add click handlers for completed workout cards
+        container.querySelectorAll('.workout-card.completed').forEach(card => {
+            card.addEventListener('click', async (e) => {
+                const workoutId = parseInt(e.currentTarget.dataset.workoutId);
+                if (workoutId) {
+                    await this.openWorkoutDetailsModal(workoutId);
                 }
             });
         });
@@ -1614,6 +1639,213 @@ class App {
         document.getElementById('metricsModal').classList.remove('active');
         document.body.style.overflow = '';
         document.getElementById('metricsForm').reset();
+    }
+
+    async openWorkoutDetailsModal(workoutId) {
+        const workout = await this.db.getWorkout(workoutId);
+        if (!workout) return;
+
+        const content = this.buildWorkoutDetailsContent(workout);
+        document.getElementById('workoutDetailsContent').innerHTML = content;
+
+        document.getElementById('workoutDetailsModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeWorkoutDetailsModal() {
+        document.getElementById('workoutDetailsModal').classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('workoutDetailsContent').innerHTML = '';
+    }
+
+    buildWorkoutDetailsContent(workout) {
+        const typeLabels = {
+            'musculation': 'Musculation',
+            'running': 'Course à pied'
+        };
+
+        const formatDate = (dateStr) => {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        };
+
+        let html = `
+            <div class="workout-detail-section">
+                <h4>${typeLabels[workout.type] || workout.type}</h4>
+                <p style="color: var(--text-secondary); margin-top: 4px;">${formatDate(workout.date)}</p>
+            </div>
+        `;
+
+        // General metrics
+        html += `
+            <div class="workout-detail-section" style="margin-top: 24px;">
+                <h4>Métriques générales</h4>
+                <div class="workout-detail-grid" style="margin-top: 12px;">
+        `;
+
+        if (workout.duration) {
+            html += `
+                <div class="workout-detail-item">
+                    <div style="color: var(--text-secondary); font-size: 12px;">Durée</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">⏱️ ${workout.duration} min</div>
+                </div>
+            `;
+        }
+
+        if (workout.rpe) {
+            html += `
+                <div class="workout-detail-item">
+                    <div style="color: var(--text-secondary); font-size: 12px;">RPE</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">${workout.rpe}/10</div>
+                </div>
+            `;
+        }
+
+        if (workout.forme) {
+            html += `
+                <div class="workout-detail-item">
+                    <div style="color: var(--text-secondary); font-size: 12px;">Forme du jour</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">${workout.forme}/10</div>
+                </div>
+            `;
+        }
+
+        if (workout.trimp) {
+            html += `
+                <div class="workout-detail-item">
+                    <div style="color: var(--text-secondary); font-size: 12px;">TRIMP</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">${workout.trimp}</div>
+                </div>
+            `;
+        }
+
+        html += `</div></div>`;
+
+        // Type-specific details
+        if (workout.type === 'musculation') {
+            html += this.buildMusculationDetails(workout);
+        } else if (workout.type === 'running') {
+            html += this.buildRunningDetails(workout);
+        }
+
+        // Notes
+        if (workout.notes) {
+            html += `
+                <div class="workout-detail-section" style="margin-top: 24px;">
+                    <h4>Notes</h4>
+                    <p style="margin-top: 8px; color: var(--text-secondary); line-height: 1.6;">${workout.notes}</p>
+                </div>
+            `;
+        }
+
+        return html;
+    }
+
+    buildMusculationDetails(workout) {
+        let html = `
+            <div class="workout-detail-section" style="margin-top: 24px;">
+                <h4>Détails Musculation</h4>
+        `;
+
+        if (workout.totalVolume) {
+            html += `
+                <div class="workout-detail-item" style="margin-top: 12px;">
+                    <div style="color: var(--text-secondary); font-size: 12px;">Volume total</div>
+                    <div style="font-size: 20px; font-weight: 600; margin-top: 4px;">💪 ${workout.totalVolume.toFixed(0)} kg</div>
+                </div>
+            `;
+        }
+
+        if (workout.exercises && workout.exercises.length > 0) {
+            html += `<div style="margin-top: 16px;">`;
+            workout.exercises.forEach((exercise, idx) => {
+                const volume = exercise.sets.reduce((sum, set) => sum + (set.reps * set.weight), 0);
+                html += `
+                    <div class="exercise-detail-item" style="margin-top: ${idx > 0 ? '12px' : '0'};">
+                        <div style="font-weight: 600; margin-bottom: 8px;">${exercise.name}</div>
+                `;
+
+                exercise.sets.forEach((set, setIdx) => {
+                    html += `
+                        <div style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">
+                            Série ${setIdx + 1}: ${set.reps} reps × ${set.weight} kg
+                        </div>
+                    `;
+                });
+
+                html += `
+                        <div style="font-size: 12px; color: var(--primary); margin-top: 8px; font-weight: 500;">
+                            Volume: ${volume.toFixed(0)} kg
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+        }
+
+        html += `</div>`;
+        return html;
+    }
+
+    buildRunningDetails(workout) {
+        let html = `
+            <div class="workout-detail-section" style="margin-top: 24px;">
+                <h4>Détails Course</h4>
+                <div class="workout-detail-grid" style="margin-top: 12px;">
+        `;
+
+        if (workout.distance) {
+            html += `
+                <div class="workout-detail-item">
+                    <div style="color: var(--text-secondary); font-size: 12px;">Distance</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">📍 ${workout.distance} km</div>
+                </div>
+            `;
+        }
+
+        if (workout.pace) {
+            html += `
+                <div class="workout-detail-item">
+                    <div style="color: var(--text-secondary); font-size: 12px;">Allure</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">⚡ ${workout.pace} min/km</div>
+                </div>
+            `;
+        }
+
+        if (workout.elevation) {
+            html += `
+                <div class="workout-detail-item">
+                    <div style="color: var(--text-secondary); font-size: 12px;">Dénivelé +</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">⛰️ ${workout.elevation} m</div>
+                </div>
+            `;
+        }
+
+        if (workout.distanceEquivalent) {
+            html += `
+                <div class="workout-detail-item">
+                    <div style="color: var(--text-secondary); font-size: 12px;">Distance équivalente</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">🏃 ${workout.distanceEquivalent.toFixed(1)} km</div>
+                </div>
+            `;
+        }
+
+        if (workout.heartRate) {
+            html += `
+                <div class="workout-detail-item">
+                    <div style="color: var(--text-secondary); font-size: 12px;">FC moyenne</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">❤️ ${workout.heartRate} bpm</div>
+                </div>
+            `;
+        }
+
+        html += `</div></div>`;
+        return html;
     }
 
     async handleMetricsFormSubmit() {
