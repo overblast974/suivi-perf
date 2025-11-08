@@ -1,7 +1,7 @@
 {
-  "name": "Suivi Performance",
-  "short_name": "Suivi Perf",
-  "description": "Application de suivi d'entraînements sportifs - Musculation et Course à pied",
+  "name": "TrainSmart",
+  "short_name": "TrainSmart",
+  "description": "Entraînement intelligent avec analyse scientifique - Musculation et Course à pied",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

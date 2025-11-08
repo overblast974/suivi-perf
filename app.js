@@ -761,13 +761,17 @@ class App {
     }
 
     async filterWorkouts(type, status = null) {
-        document.querySelectorAll('.tab').forEach(tab => {
+        document.querySelectorAll('.tab[data-type]').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.type === type);
         });
 
         this.currentFilter = type;
         if (status !== null) {
             this.currentStatusFilter = status;
+            // Update status tab active state
+            document.querySelectorAll('.status-tab').forEach(t => {
+                t.classList.toggle('active', t.dataset.status === status);
+            });
         }
 
         let workouts = await this.db.getAllWorkouts();
