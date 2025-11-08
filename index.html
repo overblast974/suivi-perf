@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="theme-color" content="#6366f1">
-    <meta name="description" content="Suivez vos performances sportives - Musculation, Course, CrossFit, Hyrox">
+    <meta name="description" content="Suivez vos performances sportives - Musculation et Course à pied">
     <title>Suivi Performance</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="styles.css">
@@ -196,8 +196,6 @@
                         <button class="tab active" data-type="all">Tous</button>
                         <button class="tab" data-type="musculation">Muscu</button>
                         <button class="tab" data-type="running">Course</button>
-                        <button class="tab" data-type="crossfit">CrossFit</button>
-                        <button class="tab" data-type="hyrox">Hyrox</button>
                     </div>
                     <select id="workoutSort" class="select-input-small">
                         <option value="recent">Plus récent</option>
@@ -261,14 +259,6 @@
                         <span class="legend-dot running"></span>
                         <span>Course</span>
                     </div>
-                    <div class="legend-item">
-                        <span class="legend-dot crossfit"></span>
-                        <span>CrossFit</span>
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-dot hyrox"></span>
-                        <span>Hyrox</span>
-                    </div>
                 </div>
             </div>
 
@@ -283,8 +273,6 @@
                         <option value="all">Tous les sports</option>
                         <option value="musculation">Musculation</option>
                         <option value="running">Course / Trail</option>
-                        <option value="crossfit">CrossFit</option>
-                        <option value="hyrox">Hyrox</option>
                     </select>
                     <select id="statsPeriod" class="select-input">
                         <option value="week">7 jours</option>
@@ -420,8 +408,6 @@
                             <option value="">Sélectionner...</option>
                             <option value="musculation">Musculation</option>
                             <option value="running">Course / Trail</option>
-                            <option value="crossfit">CrossFit</option>
-                            <option value="hyrox">Hyrox</option>
                         </select>
                     </div>
 
@@ -464,38 +450,6 @@
                         <div class="form-group">
                             <label>Allure moyenne (min/km)</label>
                             <input type="text" id="pace" class="input" placeholder="5:30">
-                        </div>
-                    </div>
-
-                    <!-- CrossFit specific fields -->
-                    <div id="crossfitFields" class="conditional-fields" style="display: none;">
-                        <div class="form-group">
-                            <label>WOD</label>
-                            <textarea id="wod" class="textarea" rows="3" placeholder="Décrivez le WOD"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Score/Temps</label>
-                            <input type="text" id="wodScore" class="input" placeholder="Ex: 15:30 ou 45 reps">
-                        </div>
-                    </div>
-
-                    <!-- Hyrox specific fields -->
-                    <div id="hyroxFields" class="conditional-fields" style="display: none;">
-                        <div class="form-group">
-                            <label>Type de session</label>
-                            <select id="hyroxType" class="select-input">
-                                <option value="full">Complet</option>
-                                <option value="simulation">Simulation</option>
-                                <option value="specific">Spécifique</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Temps total</label>
-                            <input type="text" id="hyroxTime" class="input" placeholder="HH:MM:SS">
-                        </div>
-                        <div class="form-group">
-                            <label>Détails</label>
-                            <textarea id="hyroxDetails" class="textarea" rows="3" placeholder="Temps par station, exercices..."></textarea>
                         </div>
                     </div>
 

@@ -352,10 +352,6 @@ class App {
             thisMonthWorkouts.filter(w => w.type === 'musculation').length;
         document.getElementById('runningCount').textContent =
             thisMonthWorkouts.filter(w => w.type === 'running').length;
-        document.getElementById('crossfitCount').textContent =
-            thisMonthWorkouts.filter(w => w.type === 'crossfit').length;
-        document.getElementById('hyroxCount').textContent =
-            thisMonthWorkouts.filter(w => w.type === 'hyrox').length;
 
         // Load recent workouts
         this.displayRecentWorkouts(workouts);
@@ -387,9 +383,7 @@ class App {
     createWorkoutCard(workout) {
         const typeLabels = {
             musculation: 'Musculation',
-            running: 'Course / Trail',
-            crossfit: 'CrossFit',
-            hyrox: 'Hyrox'
+            running: 'Course / Trail'
         };
 
         const date = new Date(workout.date);
@@ -409,9 +403,6 @@ class App {
             if (workout.pace) {
                 details += `<span class="workout-detail">⚡ ${workout.pace} min/km</span>`;
             }
-        }
-        if ((workout.type === 'crossfit' || workout.type === 'hyrox') && workout.wodScore) {
-            details += `<span class="workout-detail">🎯 ${workout.wodScore}</span>`;
         }
 
         return `
@@ -912,14 +903,6 @@ class App {
             workout.runTime = document.getElementById('runTime').value;
             workout.elevation = parseInt(document.getElementById('elevation').value) || 0;
             workout.pace = document.getElementById('pace').value;
-        } else if (type === 'crossfit') {
-            workout.wod = document.getElementById('wod').value;
-            workout.wodScore = document.getElementById('wodScore').value;
-        } else if (type === 'hyrox') {
-            workout.hyroxType = document.getElementById('hyroxType').value;
-            workout.hyroxTime = document.getElementById('hyroxTime').value;
-            workout.wodScore = document.getElementById('hyroxTime').value;
-            workout.hyroxDetails = document.getElementById('hyroxDetails').value;
         }
 
         try {
