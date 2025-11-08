@@ -483,6 +483,13 @@
                         </div>
                         <button class="btn-secondary" id="exportBtn">Exporter</button>
                     </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <h4>Rappels d'entraînement</h4>
+                            <p id="notificationStatus">Notifications désactivées</p>
+                        </div>
+                        <button class="btn-secondary" id="notificationBtn">Configurer</button>
+                    </div>
                 </div>
 
                 <!-- Training Zones Section -->
@@ -943,6 +950,56 @@
                         <button type="submit" class="btn-primary">Enregistrer</button>
                     </div>
                 </form>
+            </div>
+        </div>
+
+        <!-- Modal Rappels d'entraînement -->
+        <div id="notificationModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Rappels d'entraînement</h3>
+                    <button class="btn-icon" id="closeNotificationModalBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div style="padding: 20px 0;">
+                    <div id="notificationPermissionSection">
+                        <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">
+                            Activez les notifications pour recevoir des rappels d'entraînement quotidiens et rester motivé.
+                        </p>
+                        <button class="btn-primary" id="enableNotificationsBtn" style="width: 100%; margin-bottom: 20px;">
+                            🔔 Activer les notifications
+                        </button>
+                    </div>
+
+                    <div id="notificationScheduleSection" style="display: none;">
+                        <p style="color: var(--success); font-size: 13px; margin-bottom: 20px;">
+                            ✓ Notifications activées
+                        </p>
+
+                        <h4 style="font-size: 15px; margin-bottom: 16px;">Programmer un rappel quotidien</h4>
+
+                        <div class="form-group">
+                            <label>Heure du rappel</label>
+                            <input type="time" id="reminderTime" class="input" value="18:00">
+                            <small style="color: var(--text-muted); font-size: 12px;">Vous recevrez une notification chaque jour à cette heure</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Message personnalisé</label>
+                            <input type="text" id="reminderMessage" class="input" placeholder="Ex: C'est l'heure de s'entraîner !" value="C'est l'heure de votre entraînement !">
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" class="btn-secondary" id="disableNotificationsBtn">Désactiver</button>
+                            <button type="button" class="btn-primary" id="saveReminderBtn">Enregistrer</button>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

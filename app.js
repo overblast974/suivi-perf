@@ -371,6 +371,29 @@ class App {
             });
         }
 
+        // Notification modal controls
+        const notificationBtn = document.getElementById('notificationBtn');
+        if (notificationBtn) notificationBtn.addEventListener('click', () => this.openNotificationModal());
+
+        const closeNotificationModalBtn = document.getElementById('closeNotificationModalBtn');
+        if (closeNotificationModalBtn) closeNotificationModalBtn.addEventListener('click', () => this.closeNotificationModal());
+
+        const notificationModal = document.getElementById('notificationModal');
+        if (notificationModal) {
+            notificationModal.addEventListener('click', (e) => {
+                if (e.target.id === 'notificationModal') this.closeNotificationModal();
+            });
+        }
+
+        const enableNotificationsBtn = document.getElementById('enableNotificationsBtn');
+        if (enableNotificationsBtn) enableNotificationsBtn.addEventListener('click', () => this.requestNotificationPermission());
+
+        const disableNotificationsBtn = document.getElementById('disableNotificationsBtn');
+        if (disableNotificationsBtn) disableNotificationsBtn.addEventListener('click', () => this.disableNotifications());
+
+        const saveReminderBtn = document.getElementById('saveReminderBtn');
+        if (saveReminderBtn) saveReminderBtn.addEventListener('click', () => this.saveReminder());
+
         // Workout details modal controls
         const closeDetailsModalBtn = document.getElementById('closeDetailsModalBtn');
         if (closeDetailsModalBtn) closeDetailsModalBtn.addEventListener('click', () => this.closeWorkoutDetailsModal());
@@ -1701,6 +1724,14 @@ class App {
 
         // Display training zones
         this.displayTrainingZones(profile);
+
+        // Update notification status
+        this.updateNotificationStatus();
+
+        // Schedule notifications if enabled
+        if (profile.reminder && profile.reminder.enabled && Notification.permission === 'granted') {
+            this.scheduleDailyNotification(profile.reminder.time, profile.reminder.message);
+        }
     }
 
     displayTrainingZones(profile) {
@@ -2392,6 +2423,165 @@ class App {
             console.error('Erreur lors de la sauvegarde:', error);
             this.showToast('Erreur lors de la sauvegarde', 'error');
         }
+    }
+
+    async openNotificationModal() {
+        // Check current notification permission
+        if ('Notification' in window) {
+            const permission = Notification.permission;
+
+            if (permission === 'granted') {
+                // Show schedule section
+                document.getElementById('notificationPermissionSection').style.display = 'none';
+                document.getElementById('notificationScheduleSection').style.display = 'block';
+
+                // Load existing reminder settings
+                const profile = await this.db.getProfile();
+                if (profile.reminder) {
+                    document.getElementById('reminderTime').value = profile.reminder.time || '18:00';
+                    document.getElementById('reminderMessage').value = profile.reminder.message || 'C\'est l\'heure de votre entraînement !';
+                }
+            } else {
+                // Show permission request section
+                document.getElementById('notificationPermissionSection').style.display = 'block';
+                document.getElementById('notificationScheduleSection').style.display = 'none';
+            }
+        }
+
+        document.getElementById('notificationModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeNotificationModal() {
+        document.getElementById('notificationModal').classList.remove('active');
+        document.body.style.overflow = '';
+    }
+
+    async requestNotificationPermission() {
+        if (!('Notification' in window)) {
+            this.showToast('Les notifications ne sont pas supportées par ce navigateur', 'error');
+            return;
+        }
+
+        try {
+            const permission = await Notification.requestPermission();
+
+            if (permission === 'granted') {
+                this.showToast('Notifications activées !', 'success');
+                document.getElementById('notificationPermissionSection').style.display = 'none';
+                document.getElementById('notificationScheduleSection').style.display = 'block';
+                this.updateNotificationStatus();
+
+                // Send test notification
+                new Notification('TrainSmart', {
+                    body: 'Les notifications sont activées ! Vous recevrez des rappels d\'entraînement.',
+                    icon: '/icons/icon-192.png',
+                    badge: '/icons/icon-192.png'
+                });
+            } else {
+                this.showToast('Permission refusée', 'error');
+            }
+        } catch (error) {
+            console.error('Erreur lors de la demande de permission:', error);
+            this.showToast('Erreur lors de l\'activation des notifications', 'error');
+        }
+    }
+
+    async saveReminder() {
+        const time = document.getElementById('reminderTime').value;
+        const message = document.getElementById('reminderMessage').value;
+
+        const profile = await this.db.getProfile();
+
+        const updatedProfile = {
+            ...profile,
+            reminder: {
+                enabled: true,
+                time,
+                message,
+                updatedAt: new Date().toISOString()
+            }
+        };
+
+        try {
+            await this.db.saveProfile(updatedProfile);
+            this.closeNotificationModal();
+            this.updateNotificationStatus();
+            this.showToast('Rappel enregistré !', 'success');
+
+            // Schedule daily notifications
+            this.scheduleDailyNotification(time, message);
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde:', error);
+            this.showToast('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    async disableNotifications() {
+        const profile = await this.db.getProfile();
+
+        const updatedProfile = {
+            ...profile,
+            reminder: {
+                enabled: false,
+                updatedAt: new Date().toISOString()
+            }
+        };
+
+        try {
+            await this.db.saveProfile(updatedProfile);
+            this.closeNotificationModal();
+            this.updateNotificationStatus();
+            this.showToast('Rappels désactivés', 'success');
+        } catch (error) {
+            console.error('Erreur:', error);
+            this.showToast('Erreur lors de la désactivation', 'error');
+        }
+    }
+
+    async updateNotificationStatus() {
+        const statusEl = document.getElementById('notificationStatus');
+        const profile = await this.db.getProfile();
+
+        if (Notification.permission === 'granted' && profile.reminder && profile.reminder.enabled) {
+            statusEl.textContent = `Rappel quotidien à ${profile.reminder.time}`;
+            statusEl.style.color = 'var(--success)';
+        } else {
+            statusEl.textContent = 'Notifications désactivées';
+            statusEl.style.color = 'var(--text-secondary)';
+        }
+    }
+
+    scheduleDailyNotification(time, message) {
+        // For now, we'll use a simple setTimeout-based approach
+        // In production, use a service worker with Notification API and Background Sync
+
+        const [hours, minutes] = time.split(':').map(Number);
+        const now = new Date();
+        const scheduledTime = new Date();
+        scheduledTime.setHours(hours, minutes, 0, 0);
+
+        // If the time has passed today, schedule for tomorrow
+        if (scheduledTime <= now) {
+            scheduledTime.setDate(scheduledTime.getDate() + 1);
+        }
+
+        const timeUntilNotification = scheduledTime - now;
+
+        setTimeout(() => {
+            if (Notification.permission === 'granted') {
+                new Notification('TrainSmart - Rappel d\'entraînement', {
+                    body: message,
+                    icon: '/icons/icon-192.png',
+                    badge: '/icons/icon-192.png',
+                    tag: 'daily-reminder',
+                    requireInteraction: false
+                });
+
+                // Reschedule for next day
+                this.scheduleDailyNotification(time, message);
+            }
+        }, timeUntilNotification);
     }
 
     toggleConditionalFields(type) {
