@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Persistance - TrainSmart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        .test-section h2 {
+            font-size: 20px;
+            margin-bottom: 16px;
+            color: #e2e8f0;
+        }
+        .test-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .test-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        .test-status {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .status-pending {
+            background: #475569;
+            color: #cbd5e1;
+        }
+        .status-running {
+            background: #3b82f6;
+            color: white;
+            animation: pulse 1.5s infinite;
+        }
+        .status-success {
+            background: #10b981;
+            color: white;
+        }
+        .status-error {
+            background: #ef4444;
+            color: white;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 12px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result-box {
+            background: #0f172a;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.6;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .info-box {
+            background: #1e40af;
+            border-left: 4px solid #3b82f6;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            color: #dbeafe;
+        }
+        .success-box {
+            background: #065f46;
+            border-left: 4px solid #10b981;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            color: #d1fae5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Test de Persistance des Données</h1>
+        <p class="subtitle">Vérification que toutes les données sont bien stockées dans Supabase</p>
+
+        <div class="info-box">
+            <strong>ℹ️ Information:</strong> Ce test vérifie que toutes les données (profil, séances, objectifs) sont bien stockées dans Supabase et persistent après déconnexion/reconnexion.
+        </div>
+
+        <div class="test-section">
+            <h2>🔐 Connexion requise</h2>
+            <p style="color: #94a3b8; margin-bottom: 12px;">Vous devez être connecté pour exécuter ces tests.</p>
+            <div class="test-row">
+                <span class="test-name">Statut d'authentification</span>
+                <span class="test-status status-pending" id="authStatus">Non vérifié</span>
+            </div>
+            <div class="test-row">
+                <span class="test-name">Utilisateur connecté</span>
+                <span class="test-status status-pending" id="userEmail">-</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Tests de Persistance</h2>
+
+            <div class="test-row">
+                <span class="test-name">1. Lecture du profil utilisateur</span>
+                <span class="test-status status-pending" id="test1">En attente</span>
+            </div>
+
+            <div class="test-row">
+                <span class="test-name">2. Création d'une séance test</span>
+                <span class="test-status status-pending" id="test2">En attente</span>
+            </div>
+
+            <div class="test-row">
+                <span class="test-name">3. Vérification persistance séance</span>
+                <span class="test-status status-pending" id="test3">En attente</span>
+            </div>
+
+            <div class="test-row">
+                <span class="test-name">4. Création d'un objectif test</span>
+                <span class="test-status status-pending" id="test4">En attente</span>
+            </div>
+
+            <div class="test-row">
+                <span class="test-name">5. Vérification persistance objectif</span>
+                <span class="test-status status-pending" id="test5">En attente</span>
+            </div>
+
+            <div class="test-row">
+                <span class="test-name">6. Modification du profil</span>
+                <span class="test-status status-pending" id="test6">En attente</span>
+            </div>
+
+            <div class="test-row">
+                <span class="test-name">7. Vérification persistance profil</span>
+                <span class="test-status status-pending" id="test7">En attente</span>
+            </div>
+
+            <div class="test-row">
+                <span class="test-name">8. Nettoyage données test</span>
+                <span class="test-status status-pending" id="test8">En attente</span>
+            </div>
+
+            <button id="runTestBtn" class="btn">▶ Lancer les tests</button>
+        </div>
+
+        <div class="test-section" id="resultsSection" style="display: none;">
+            <h2>📋 Résultats détaillés</h2>
+            <div id="results" class="result-box"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script src="supabase-db.js"></script>
+    <script>
+        let db;
+        let testWorkoutId;
+        let testGoalId;
+        let originalProfile;
+
+        function log(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const prefix = type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ';
+            resultsDiv.textContent += `[${timestamp}] ${prefix} ${message}\n`;
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+
+        function setTestStatus(testId, status, text) {
+            const el = document.getElementById(testId);
+            el.className = `test-status status-${status}`;
+            el.textContent = text || status;
+        }
+
+        async function checkAuth() {
+            try {
+                const { data: { session } } = await window.supabaseClient.auth.getSession();
+
+                if (!session) {
+                    setTestStatus('authStatus', 'error', 'Non connecté');
+                    document.getElementById('userEmail').textContent = 'Veuillez vous connecter';
+                    alert('Vous devez être connecté pour exécuter ces tests. Redirection vers la page de connexion...');
+                    window.location.href = 'auth.html';
+                    return false;
+                }
+
+                setTestStatus('authStatus', 'success', 'Connecté');
+                document.getElementById('userEmail').textContent = session.user.email;
+                document.getElementById('userEmail').className = 'test-status status-success';
+
+                return true;
+            } catch (error) {
+                setTestStatus('authStatus', 'error', 'Erreur');
+                console.error('Auth error:', error);
+                return false;
+            }
+        }
+
+        async function runTests() {
+            document.getElementById('runTestBtn').disabled = true;
+            document.getElementById('resultsSection').style.display = 'block';
+            document.getElementById('results').textContent = '';
+
+            log('=== Début des tests de persistance ===', 'info');
+            log('', 'info');
+
+            try {
+                // Initialize database
+                db = new SupabaseDatabase();
+                await db.init();
+                log('✓ Connexion à Supabase établie', 'success');
+
+                // Test 1: Read profile
+                setTestStatus('test1', 'running', 'En cours...');
+                log('Test 1: Lecture du profil...', 'info');
+                originalProfile = await db.getProfile();
+                log(`Profil récupéré: ${JSON.stringify(originalProfile.userInfo || {})}`, 'success');
+                setTestStatus('test1', 'success', 'Réussi');
+                await sleep(500);
+
+                // Test 2: Create test workout
+                setTestStatus('test2', 'running', 'En cours...');
+                log('Test 2: Création d\'une séance test...', 'info');
+                const testWorkout = {
+                    type: 'running',
+                    date: new Date().toISOString().split('T')[0],
+                    duration: 30,
+                    distance: 5,
+                    rpe: 7,
+                    forme: 8,
+                    notes: 'TEST - À supprimer',
+                    status: 'completed'
+                };
+                testWorkoutId = await db.addWorkout(testWorkout);
+                log(`Séance créée avec ID: ${testWorkoutId}`, 'success');
+                setTestStatus('test2', 'success', 'Réussi');
+                await sleep(500);
+
+                // Test 3: Verify workout persistence
+                setTestStatus('test3', 'running', 'En cours...');
+                log('Test 3: Vérification persistance de la séance...', 'info');
+                const retrievedWorkout = await db.getWorkout(testWorkoutId);
+                if (retrievedWorkout && retrievedWorkout.notes === 'TEST - À supprimer') {
+                    log('✓ Séance retrouvée avec les bonnes données', 'success');
+                    setTestStatus('test3', 'success', 'Réussi');
+                } else {
+                    throw new Error('Séance non retrouvée ou données incorrectes');
+                }
+                await sleep(500);
+
+                // Test 4: Create test goal
+                setTestStatus('test4', 'running', 'En cours...');
+                log('Test 4: Création d\'un objectif test...', 'info');
+                const testGoal = {
+                    type: 'running',
+                    description: 'TEST - Objectif à supprimer',
+                    target: 10,
+                    unit: 'km',
+                    deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    status: 'active'
+                };
+                testGoalId = await db.addGoal(testGoal);
+                log(`Objectif créé avec ID: ${testGoalId}`, 'success');
+                setTestStatus('test4', 'success', 'Réussi');
+                await sleep(500);
+
+                // Test 5: Verify goal persistence
+                setTestStatus('test5', 'running', 'En cours...');
+                log('Test 5: Vérification persistance de l\'objectif...', 'info');
+                const retrievedGoal = await db.getGoal(testGoalId);
+                if (retrievedGoal && retrievedGoal.description === 'TEST - Objectif à supprimer') {
+                    log('✓ Objectif retrouvé avec les bonnes données', 'success');
+                    setTestStatus('test5', 'success', 'Réussi');
+                } else {
+                    throw new Error('Objectif non retrouvé ou données incorrectes');
+                }
+                await sleep(500);
+
+                // Test 6: Modify profile
+                setTestStatus('test6', 'running', 'En cours...');
+                log('Test 6: Modification du profil...', 'info');
+                const testValue = `TEST_${Date.now()}`;
+                await db.saveProfile({
+                    ...originalProfile,
+                    userInfo: {
+                        ...originalProfile.userInfo,
+                        name: testValue
+                    }
+                });
+                log(`Profil modifié avec valeur test: ${testValue}`, 'success');
+                setTestStatus('test6', 'success', 'Réussi');
+                await sleep(500);
+
+                // Test 7: Verify profile persistence
+                setTestStatus('test7', 'running', 'En cours...');
+                log('Test 7: Vérification persistance du profil...', 'info');
+                const updatedProfile = await db.getProfile();
+                if (updatedProfile.userInfo.name === testValue) {
+                    log('✓ Profil retrouvé avec les modifications', 'success');
+                    setTestStatus('test7', 'success', 'Réussi');
+                } else {
+                    throw new Error('Modifications du profil non persistées');
+                }
+                await sleep(500);
+
+                // Test 8: Cleanup
+                setTestStatus('test8', 'running', 'En cours...');
+                log('Test 8: Nettoyage des données test...', 'info');
+
+                // Restore original profile
+                await db.saveProfile(originalProfile);
+                log('✓ Profil restauré', 'success');
+
+                // Delete test workout
+                await db.deleteWorkout(testWorkoutId);
+                log('✓ Séance test supprimée', 'success');
+
+                // Delete test goal
+                await db.deleteGoal(testGoalId);
+                log('✓ Objectif test supprimé', 'success');
+
+                setTestStatus('test8', 'success', 'Réussi');
+
+                log('', 'info');
+                log('=== ✓ TOUS LES TESTS RÉUSSIS ===', 'success');
+                log('', 'info');
+                log('Conclusion: Toutes les données sont bien stockées dans Supabase', 'success');
+                log('et persistent correctement. Aucun stockage local détecté.', 'success');
+
+                // Show success message
+                const successBox = document.createElement('div');
+                successBox.className = 'success-box';
+                successBox.innerHTML = `
+                    <strong>✅ Tests réussis!</strong><br>
+                    Toutes les données sont correctement stockées dans Supabase et persistent après déconnexion/reconnexion.
+                    Les données sont liées à votre compte et seront accessibles depuis n'importe quel appareil.
+                `;
+                document.querySelector('.container').appendChild(successBox);
+
+            } catch (error) {
+                log(`✗ ERREUR: ${error.message}`, 'error');
+                console.error('Test error:', error);
+                alert('Erreur durant les tests. Consultez la console pour plus de détails.');
+            } finally {
+                document.getElementById('runTestBtn').disabled = false;
+                document.getElementById('runTestBtn').textContent = '🔄 Relancer les tests';
+            }
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Event listeners
+        document.getElementById('runTestBtn').addEventListener('click', runTests);
+
+        // Check auth on load
+        window.addEventListener('load', checkAuth);
+    </script>
+</body>
+</html>

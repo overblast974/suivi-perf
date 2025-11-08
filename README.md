@@ -1,6 +1,6 @@
-# Suivi Performance - Application PWA
+# TrainSmart - Application PWA
 
-Application Progressive Web App (PWA) moderne pour suivre vos entraînements sportifs.
+Application Progressive Web App (PWA) moderne et intelligente pour suivre vos entraînements sportifs avec analyse scientifique.
 
 ## Fonctionnalités
 
@@ -13,11 +13,17 @@ Application Progressive Web App (PWA) moderne pour suivre vos entraînements spo
 ### Caractéristiques principales
 - Interface moderne et épurée
 - Design responsive optimisé pour mobile (6,1" à 6,7")
-- Mode hors-ligne complet (PWA)
-- Stockage local avec IndexedDB
-- Graphiques de progression
+- Mode hors-ligne pour l'interface (PWA)
+- **Stockage cloud sécurisé avec Supabase**
+- **Authentification utilisateur complète**
+- **Synchronisation multi-appareils automatique**
+- Analyse scientifique : ACWR, TRIMP, RPE, zones d'entraînement
+- Calculs physiologiques : VMA, VO2max, FC max (formule Tanaka 2001)
+- Graphiques de progression interactifs
+- Notifications push pour rappels d'entraînement
 - Export des données JSON
 - Installation possible comme application mobile
+- **Système de rôles (utilisateur/administrateur)**
 
 ## Installation
 
@@ -78,11 +84,14 @@ suivi-perf/
 
 - **HTML5** : Structure sémantique
 - **CSS3** : Design moderne avec variables CSS, Flexbox, Grid
-- **JavaScript ES6+** : Programmation moderne
-- **IndexedDB** : Base de données locale
+- **JavaScript ES6+** : Programmation moderne avec async/await
+- **Supabase** : Backend cloud (PostgreSQL + Authentication + Row Level Security)
+- **PostgreSQL** : Base de données relationnelle sécurisée
+- **Supabase Auth** : Authentification email/password
 - **Chart.js** : Graphiques interactifs
-- **Service Worker** : Fonctionnement offline
+- **Service Worker** : Cache des fichiers statiques pour mode offline
 - **Web App Manifest** : Installation PWA
+- **Notification API** : Rappels d'entraînement
 
 ## Design
 
@@ -146,16 +155,25 @@ Activez GitHub Pages dans les paramètres du repository.
    AddType application/manifest+json .json
    ```
 
+## Fonctionnalités implémentées
+
+- [x] ✅ Synchronisation cloud (Supabase)
+- [x] ✅ Authentification utilisateur
+- [x] ✅ Rappels et notifications push
+- [x] ✅ Zones d'entraînement VMA/FC
+- [x] ✅ Analyse ACWR/TRIMP/RPE
+- [x] ✅ Système de rôles admin
+
 ## Fonctionnalités à venir
 
-- [ ] Synchronisation cloud (Firebase, Supabase)
-- [ ] Partage d'entraînements
+- [ ] Partage d'entraînements entre utilisateurs
 - [ ] Plans d'entraînement personnalisés
-- [ ] Rappels et notifications
 - [ ] Mode coach avec élèves
-- [ ] Import de données depuis d'autres apps
+- [ ] Import de données depuis d'autres apps (Strava, Garmin, etc.)
 - [ ] Analyse IA des performances
 - [ ] Mode collaboratif / équipes
+- [ ] Dashboard administrateur complet
+- [ ] Statistiques globales pour admins
 
 ## Licence
 
