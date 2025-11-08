@@ -286,8 +286,14 @@ class App {
 
         if (editUserInfoBtn) editUserInfoBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
         if (editAnthropoBtn) editAnthropoBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
-        if (editMetricsBtn) editMetricsBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
+        if (editMetricsBtn) editMetricsBtn.addEventListener('click', () => this.openMetricsModal());
         if (editGoalsBtn) editGoalsBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
+
+        // Metrics modal controls
+        const closeMetricsModalBtn = document.getElementById('closeMetricsModalBtn');
+        const cancelMetricsBtn = document.getElementById('cancelMetricsBtn');
+        if (closeMetricsModalBtn) closeMetricsModalBtn.addEventListener('click', () => this.closeMetricsModal());
+        if (cancelMetricsBtn) cancelMetricsBtn.addEventListener('click', () => this.closeMetricsModal());
 
         // Goal button
         const addGoalBtn = document.getElementById('addGoalBtn');
@@ -353,6 +359,14 @@ class App {
             e.preventDefault();
             await this.handlePlanFormSubmit();
         });
+
+        const metricsForm = document.getElementById('metricsForm');
+        if (metricsForm) {
+            metricsForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await this.handleMetricsFormSubmit();
+            });
+        }
     }
 
     setTodayDate() {
@@ -1499,6 +1513,18 @@ class App {
             document.getElementById('anthropoDisplay').textContent =
                 `${profile.anthropo.weight || ''} kg, ${profile.anthropo.height || ''} cm`;
         }
+
+        // Display metrics
+        if (profile.metrics) {
+            const metricsText = [];
+            if (profile.metrics.vo2max) metricsText.push(`VO2max: ${profile.metrics.vo2max} ml/kg/min`);
+            if (profile.metrics.vma) metricsText.push(`VMA: ${profile.metrics.vma} km/h`);
+            if (profile.metrics.fcMax) metricsText.push(`FCmax: ${profile.metrics.fcMax} bpm`);
+
+            if (metricsText.length > 0) {
+                document.getElementById('metricsDisplay').textContent = metricsText.join(' • ');
+            }
+        }
     }
 
     openModal() {
@@ -1563,6 +1589,63 @@ class App {
         document.getElementById('planSessionModal').classList.remove('active');
         document.body.style.overflow = '';
         document.getElementById('planSessionForm').reset();
+    }
+
+    async openMetricsModal() {
+        const profile = await this.db.getProfile();
+
+        // Pre-fill existing metrics
+        if (profile.metrics) {
+            if (profile.metrics.vo2max) document.getElementById('vo2maxInput').value = profile.metrics.vo2max;
+            if (profile.metrics.vma) document.getElementById('vmaInput').value = profile.metrics.vma;
+            if (profile.metrics.fcMax) document.getElementById('fcMaxInput').value = profile.metrics.fcMax;
+            if (profile.metrics.fcRepos) document.getElementById('fcReposInput').value = profile.metrics.fcRepos;
+        }
+
+        document.getElementById('metricsModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeMetricsModal() {
+        document.getElementById('metricsModal').classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('metricsForm').reset();
+    }
+
+    async handleMetricsFormSubmit() {
+        const vo2max = parseFloat(document.getElementById('vo2maxInput').value) || null;
+        const vma = parseFloat(document.getElementById('vmaInput').value) || null;
+        const fcMax = parseInt(document.getElementById('fcMaxInput').value) || null;
+        const fcRepos = parseInt(document.getElementById('fcReposInput').value) || null;
+
+        // Auto-calculate VMA from VO2max if VMA not provided
+        let finalVMA = vma;
+        if (!vma && vo2max && typeof WorkoutCalculations !== 'undefined') {
+            finalVMA = parseFloat(WorkoutCalculations.estimateVMA(vo2max));
+        }
+
+        const profile = await this.db.getProfile();
+
+        const updatedProfile = {
+            ...profile,
+            metrics: {
+                vo2max,
+                vma: finalVMA,
+                fcMax,
+                fcRepos,
+                updatedAt: new Date().toISOString()
+            }
+        };
+
+        try {
+            await this.db.saveProfile(updatedProfile);
+            this.closeMetricsModal();
+            this.loadProfile();
+            this.showToast('Marqueurs physiologiques enregistrés!');
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde:', error);
+            this.showToast('Erreur lors de la sauvegarde', 'error');
+        }
     }
 
     toggleConditionalFields(type) {
@@ -1725,17 +1808,70 @@ class App {
 
     async exportData() {
         const workouts = await this.db.getAllWorkouts();
-        const dataStr = JSON.stringify(workouts, null, 2);
+        const profile = await this.db.getProfile();
+        const completedWorkouts = workouts.filter(w => !w.status || w.status === 'completed');
+
+        // Calculate current metrics
+        const acwr = typeof WorkoutCalculations !== 'undefined'
+            ? WorkoutCalculations.calculateACWR(completedWorkouts)
+            : null;
+
+        const overtraining = typeof WorkoutCalculations !== 'undefined'
+            ? WorkoutCalculations.detectOvertraining(completedWorkouts)
+            : null;
+
+        const monotonyStrain = typeof WorkoutCalculations !== 'undefined'
+            ? WorkoutCalculations.calculateMonotonyStrain(completedWorkouts)
+            : null;
+
+        // Create comprehensive export
+        const exportData = {
+            exportDate: new Date().toISOString(),
+            version: '1.0',
+            profile: profile,
+            statistics: {
+                totalWorkouts: workouts.length,
+                completedWorkouts: completedWorkouts.length,
+                plannedWorkouts: workouts.filter(w => w.status === 'planned').length,
+                musculationWorkouts: completedWorkouts.filter(w => w.type === 'musculation').length,
+                runningWorkouts: completedWorkouts.filter(w => w.type === 'running').length,
+                totalVolume: completedWorkouts
+                    .filter(w => w.type === 'musculation' && w.totalVolume)
+                    .reduce((sum, w) => sum + w.totalVolume, 0),
+                totalDistance: completedWorkouts
+                    .filter(w => w.type === 'running' && w.distance)
+                    .reduce((sum, w) => sum + w.distance, 0),
+                totalDuration: completedWorkouts
+                    .filter(w => w.duration)
+                    .reduce((sum, w) => sum + w.duration, 0),
+                avgRPE: completedWorkouts.filter(w => w.rpe).length > 0
+                    ? (completedWorkouts.reduce((sum, w) => sum + (w.rpe || 0), 0) /
+                       completedWorkouts.filter(w => w.rpe).length).toFixed(1)
+                    : null,
+                avgForme: completedWorkouts.filter(w => w.forme).length > 0
+                    ? (completedWorkouts.reduce((sum, w) => sum + (w.forme || 0), 0) /
+                       completedWorkouts.filter(w => w.forme).length).toFixed(1)
+                    : null
+            },
+            currentMetrics: {
+                acwr: acwr,
+                overtrainingRisk: overtraining,
+                monotonyStrain: monotonyStrain
+            },
+            workouts: workouts
+        };
+
+        const dataStr = JSON.stringify(exportData, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
 
         const url = URL.createObjectURL(dataBlob);
         const link = document.createElement('a');
         link.href = url;
-        link.download = `suivi-perf-export-${new Date().toISOString().split('T')[0]}.json`;
+        link.download = `suivi-perf-rapport-${new Date().toISOString().split('T')[0]}.json`;
         link.click();
 
         URL.revokeObjectURL(url);
-        this.showToast('Données exportées avec succès!');
+        this.showToast('Rapport complet exporté avec succès!');
     }
 }
 

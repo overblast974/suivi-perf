@@ -649,6 +649,55 @@
                 </form>
             </div>
         </div>
+
+        <!-- Modal Marqueurs Physiologiques -->
+        <div id="metricsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Marqueurs physiologiques</h3>
+                    <button class="btn-icon" id="closeMetricsModalBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <form id="metricsForm" class="form">
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">
+                        Entrez vos données physiologiques pour un suivi plus précis. Ces valeurs peuvent être mesurées en laboratoire ou estimées via des tests de terrain.
+                    </p>
+
+                    <div class="form-group">
+                        <label>VO2max (ml/kg/min)</label>
+                        <input type="number" id="vo2maxInput" class="input" step="0.1" min="20" max="90" placeholder="Ex: 55.0">
+                        <small style="color: var(--text-muted); font-size: 12px;">Consommation maximale d'oxygène</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>VMA (km/h)</label>
+                        <input type="number" id="vmaInput" class="input" step="0.1" min="8" max="25" placeholder="Ex: 16.5">
+                        <small style="color: var(--text-muted); font-size: 12px;">Vitesse maximale aérobie (peut être calculée depuis VO2max)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fréquence cardiaque max (bpm)</label>
+                        <input type="number" id="fcMaxInput" class="input" min="120" max="220" placeholder="Ex: 190">
+                        <small style="color: var(--text-muted); font-size: 12px;">FC maximale (220 - âge est une approximation)</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Fréquence cardiaque repos (bpm)</label>
+                        <input type="number" id="fcReposInput" class="input" min="30" max="100" placeholder="Ex: 55">
+                        <small style="color: var(--text-muted); font-size: 12px;">Mesuré le matin au réveil</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelMetricsBtn">Annuler</button>
+                        <button type="submit" class="btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
