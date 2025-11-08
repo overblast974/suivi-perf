@@ -73,6 +73,28 @@ class DatabaseManager {
         });
     }
 
+    async getWorkout(id) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['workouts'], 'readonly');
+            const store = transaction.objectStore('workouts');
+            const request = store.get(id);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async updateWorkout(id, data) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['workouts'], 'readwrite');
+            const store = transaction.objectStore('workouts');
+            const request = store.put({ ...data, id });
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
     async deleteWorkout(id) {
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(['workouts'], 'readwrite');
@@ -135,7 +157,9 @@ class App {
         this.db = new DatabaseManager();
         this.currentView = 'dashboard';
         this.currentFilter = 'all';
+        this.currentStatusFilter = 'all';
         this.currentSort = 'recent';
+        this.editingWorkoutId = null;
         this.charts = {
             frequency: null,
             volume: null,
@@ -200,11 +224,22 @@ class App {
             this.toggleConditionalFields(e.target.value);
         });
 
-        // Tabs
-        document.querySelectorAll('.tab').forEach(tab => {
+        // Type filter tabs
+        document.querySelectorAll('.tab[data-type]').forEach(tab => {
             tab.addEventListener('click', (e) => {
                 const type = e.currentTarget.dataset.type;
                 this.filterWorkouts(type);
+            });
+        });
+
+        // Status filter tabs
+        document.querySelectorAll('.tab[data-status]').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const status = e.currentTarget.dataset.status;
+                document.querySelectorAll('.status-tab').forEach(t => {
+                    t.classList.toggle('active', t.dataset.status === status);
+                });
+                this.filterWorkouts(this.currentFilter, status);
             });
         });
 
@@ -411,59 +446,88 @@ class App {
             year: 'numeric'
         });
 
-        let details = `<span class="workout-detail">⏱️ ${workout.duration} min</span>`;
+        const isPlanned = workout.status === 'planned';
+        const statusBadge = isPlanned
+            ? '<span class="status-badge planned">À faire</span>'
+            : '<span class="status-badge completed">Terminé</span>';
 
-        if (workout.type === 'musculation' && workout.totalVolume) {
-            details += `<span class="workout-detail">💪 ${workout.totalVolume} kg</span>`;
-        }
-        if (workout.type === 'running' && workout.distance) {
-            details += `<span class="workout-detail">📍 ${workout.distance} km</span>`;
-            if (workout.pace) {
-                details += `<span class="workout-detail">⚡ ${workout.pace} min/km</span>`;
+        let details = '';
+        if (isPlanned) {
+            // Planned session - show note if available
+            if (workout.note) {
+                details = `<span class="workout-detail">📝 ${workout.note}</span>`;
+            } else {
+                details = '<span class="workout-detail">Cliquer pour valider</span>';
+            }
+        } else {
+            // Completed session - show details
+            details = `<span class="workout-detail">⏱️ ${workout.duration} min</span>`;
+            if (workout.type === 'musculation' && workout.totalVolume) {
+                details += `<span class="workout-detail">💪 ${workout.totalVolume} kg</span>`;
+            }
+            if (workout.type === 'running' && workout.distance) {
+                details += `<span class="workout-detail">📍 ${workout.distance} km</span>`;
+                if (workout.pace) {
+                    details += `<span class="workout-detail">⚡ ${workout.pace} min/km</span>`;
+                }
             }
         }
 
+        const clickHandler = isPlanned ? `data-workout-id="${workout.id}"` : '';
+        const cursorStyle = isPlanned ? 'cursor: pointer;' : '';
+
         return `
-            <div class="workout-card">
+            <div class="workout-card ${isPlanned ? 'planned' : ''}" ${clickHandler} style="${cursorStyle}">
                 <div class="workout-header">
                     <div class="workout-type">
                         <span class="workout-type-badge ${workout.type}"></span>
                         <span class="workout-title">${typeLabels[workout.type]}</span>
+                        ${statusBadge}
                     </div>
                     <span class="workout-date">${formattedDate}</span>
                 </div>
                 <div class="workout-details">
                     ${details}
                 </div>
-                ${workout.notes ? `<p style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">${workout.notes}</p>` : ''}
+                ${!isPlanned && workout.notes ? `<p style="margin-top: 8px; font-size: 13px; color: var(--text-secondary);">${workout.notes}</p>` : ''}
             </div>
         `;
     }
 
     async loadWorkouts() {
-        const allWorkouts = await this.db.getAllWorkouts();
-        // Filter only completed workouts
-        const workouts = allWorkouts.filter(w => !w.status || w.status === 'completed');
-        this.displayWorkouts(workouts, 'all');
+        const workouts = await this.db.getAllWorkouts();
+        this.displayWorkouts(workouts, 'all', 'all');
     }
 
-    async filterWorkouts(type) {
+    async filterWorkouts(type, status = null) {
         document.querySelectorAll('.tab').forEach(tab => {
             tab.classList.toggle('active', tab.dataset.type === type);
         });
 
         this.currentFilter = type;
-        const allWorkouts = type === 'all'
-            ? await this.db.getAllWorkouts()
-            : await this.db.getWorkoutsByType(type);
+        if (status !== null) {
+            this.currentStatusFilter = status;
+        }
 
-        // Filter only completed workouts
-        const workouts = allWorkouts.filter(w => !w.status || w.status === 'completed');
+        let workouts = await this.db.getAllWorkouts();
 
-        this.displayWorkouts(workouts, type);
+        // Filter by type
+        if (type !== 'all') {
+            workouts = workouts.filter(w => w.type === type);
+        }
+
+        // Filter by status
+        if (this.currentStatusFilter === 'planned') {
+            workouts = workouts.filter(w => w.status === 'planned');
+        } else if (this.currentStatusFilter === 'completed') {
+            workouts = workouts.filter(w => !w.status || w.status === 'completed');
+        }
+        // 'all' shows everything
+
+        this.displayWorkouts(workouts, type, this.currentStatusFilter);
     }
 
-    displayWorkouts(workouts, type) {
+    displayWorkouts(workouts, type, status) {
         const container = document.getElementById('allWorkouts');
 
         // Sort workouts
@@ -494,6 +558,16 @@ class App {
         }
 
         container.innerHTML = sorted.map(workout => this.createWorkoutCard(workout)).join('');
+
+        // Add click handlers for planned workout cards
+        container.querySelectorAll('.workout-card.planned').forEach(card => {
+            card.addEventListener('click', async (e) => {
+                const workoutId = parseInt(e.currentTarget.dataset.workoutId);
+                if (workoutId) {
+                    await this.openValidationModal(workoutId);
+                }
+            });
+        });
     }
 
     async loadProgram() {
@@ -898,8 +972,28 @@ class App {
     }
 
     openModal() {
+        this.editingWorkoutId = null;
         document.getElementById('addWorkoutModal').classList.add('active');
         document.body.style.overflow = 'hidden';
+    }
+
+    async openValidationModal(workoutId) {
+        const workout = await this.db.getWorkout(workoutId);
+        if (!workout) return;
+
+        this.editingWorkoutId = workoutId;
+
+        // Pre-fill the form
+        document.getElementById('workoutType').value = workout.type;
+        document.getElementById('workoutDate').value = workout.date;
+        this.toggleConditionalFields(workout.type);
+
+        // Open modal
+        document.getElementById('addWorkoutModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+
+        // Show a message that this is a validation
+        this.showToast('Validation de séance planifiée', 'success');
     }
 
     closeModal() {
@@ -908,6 +1002,7 @@ class App {
         document.getElementById('workoutForm').reset();
         this.toggleConditionalFields('');
         this.setTodayDate();
+        this.editingWorkoutId = null;
     }
 
     openPlanModal(dateStr) {
@@ -948,7 +1043,8 @@ class App {
             date,
             duration: parseInt(duration),
             notes,
-            status: 'completed'
+            status: 'completed',
+            completedAt: new Date().toISOString()
         };
 
         // Add type-specific fields
@@ -963,7 +1059,16 @@ class App {
         }
 
         try {
-            await this.db.addWorkout(workout);
+            if (this.editingWorkoutId) {
+                // Updating an existing planned workout
+                await this.db.updateWorkout(this.editingWorkoutId, workout);
+                this.showToast('Séance validée avec succès!');
+            } else {
+                // Adding a new workout
+                await this.db.addWorkout(workout);
+                this.showToast('Entraînement ajouté avec succès!');
+            }
+
             this.closeModal();
 
             // Reload current view
@@ -981,11 +1086,9 @@ class App {
                     this.loadStats();
                     break;
             }
-
-            this.showToast('Entraînement ajouté avec succès!');
         } catch (error) {
-            console.error('Erreur lors de l\'ajout:', error);
-            this.showToast('Erreur lors de l\'ajout', 'error');
+            console.error('Erreur lors de l\'opération:', error);
+            this.showToast('Erreur lors de l\'opération', 'error');
         }
     }
 
