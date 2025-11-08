@@ -178,10 +178,20 @@ class App {
         document.getElementById('closeModalBtn').addEventListener('click', () => this.closeModal());
         document.getElementById('cancelBtn').addEventListener('click', () => this.closeModal());
 
+        // Plan session modal controls
+        document.getElementById('closePlanModalBtn').addEventListener('click', () => this.closePlanModal());
+        document.getElementById('cancelPlanBtn').addEventListener('click', () => this.closePlanModal());
+
         // Click outside modal to close
         document.getElementById('addWorkoutModal').addEventListener('click', (e) => {
             if (e.target.id === 'addWorkoutModal') {
                 this.closeModal();
+            }
+        });
+
+        document.getElementById('planSessionModal').addEventListener('click', (e) => {
+            if (e.target.id === 'planSessionModal') {
+                this.closePlanModal();
             }
         });
 
@@ -295,6 +305,12 @@ class App {
             e.preventDefault();
             await this.handleFormSubmit();
         });
+
+        const planForm = document.getElementById('planSessionForm');
+        planForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await this.handlePlanFormSubmit();
+        });
     }
 
     setTodayDate() {
@@ -338,12 +354,14 @@ class App {
 
     async loadDashboard() {
         const workouts = await this.db.getAllWorkouts();
+        // Filter only completed workouts (treat undefined status as completed for backward compatibility)
+        const completedWorkouts = workouts.filter(w => !w.status || w.status === 'completed');
 
         // Update stats cards
         const currentMonth = new Date().getMonth();
         const currentYear = new Date().getFullYear();
 
-        const thisMonthWorkouts = workouts.filter(w => {
+        const thisMonthWorkouts = completedWorkouts.filter(w => {
             const date = new Date(w.date);
             return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
         });
@@ -354,7 +372,7 @@ class App {
             thisMonthWorkouts.filter(w => w.type === 'running').length;
 
         // Load recent workouts
-        this.displayRecentWorkouts(workouts);
+        this.displayRecentWorkouts(completedWorkouts);
     }
 
     displayRecentWorkouts(workouts) {
@@ -423,7 +441,9 @@ class App {
     }
 
     async loadWorkouts() {
-        const workouts = await this.db.getAllWorkouts();
+        const allWorkouts = await this.db.getAllWorkouts();
+        // Filter only completed workouts
+        const workouts = allWorkouts.filter(w => !w.status || w.status === 'completed');
         this.displayWorkouts(workouts, 'all');
     }
 
@@ -433,9 +453,12 @@ class App {
         });
 
         this.currentFilter = type;
-        const workouts = type === 'all'
+        const allWorkouts = type === 'all'
             ? await this.db.getAllWorkouts()
             : await this.db.getWorkoutsByType(type);
+
+        // Filter only completed workouts
+        const workouts = allWorkouts.filter(w => !w.status || w.status === 'completed');
 
         this.displayWorkouts(workouts, type);
     }
@@ -515,6 +538,8 @@ class App {
         for (let day = 1; day <= daysInMonth; day++) {
             const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const dayWorkouts = workouts.filter(w => w.date === dateStr);
+            const plannedSessions = dayWorkouts.filter(w => w.status === 'planned');
+            const completedSessions = dayWorkouts.filter(w => w.status === 'completed');
 
             const isToday = today.getDate() === day &&
                            today.getMonth() === currentMonth &&
@@ -525,12 +550,19 @@ class App {
             if (dayWorkouts.length > 0) classes.push('has-workout');
 
             html += `
-                <div class="${classes.join(' ')}">
+                <div class="${classes.join(' ')}" data-date="${dateStr}">
                     <span>${day}</span>
-                    ${dayWorkouts.length > 0 ? `
+                    ${completedSessions.length > 0 ? `
                         <div class="workout-dots">
-                            ${dayWorkouts.slice(0, 4).map(w =>
-                                `<div class="workout-dot ${w.type}"></div>`
+                            ${completedSessions.slice(0, 4).map(w =>
+                                `<div class="workout-dot ${w.type}" title="Terminé"></div>`
+                            ).join('')}
+                        </div>
+                    ` : ''}
+                    ${plannedSessions.length > 0 ? `
+                        <div class="workout-dots">
+                            ${plannedSessions.slice(0, 4).map(w =>
+                                `<div class="workout-dot ${w.type} planned" title="Planifié: ${w.note || w.type}"></div>`
                             ).join('')}
                         </div>
                     ` : ''}
@@ -540,6 +572,16 @@ class App {
 
         html += `</div>`;
         calendar.innerHTML = html;
+
+        // Add click handlers to calendar days
+        calendar.querySelectorAll('.calendar-day[data-date]').forEach(day => {
+            day.addEventListener('click', (e) => {
+                const dateStr = e.currentTarget.dataset.date;
+                if (dateStr) {
+                    this.openPlanModal(dateStr);
+                }
+            });
+        });
     }
 
     changeMonth(delta) {
@@ -563,7 +605,9 @@ class App {
         const period = document.getElementById('statsPeriod').value;
         const aggregation = document.getElementById('statsAggregation')?.value || 'day';
 
-        const workouts = await this.db.getAllWorkouts();
+        const allWorkouts = await this.db.getAllWorkouts();
+        // Filter only completed workouts
+        const workouts = allWorkouts.filter(w => !w.status || w.status === 'completed');
         let filtered = type === 'all' ? workouts : workouts.filter(w => w.type === type);
 
         // Filter by period
@@ -866,6 +910,18 @@ class App {
         this.setTodayDate();
     }
 
+    openPlanModal(dateStr) {
+        document.getElementById('planDate').value = dateStr;
+        document.getElementById('planSessionModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closePlanModal() {
+        document.getElementById('planSessionModal').classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('planSessionForm').reset();
+    }
+
     toggleConditionalFields(type) {
         document.querySelectorAll('.conditional-fields').forEach(field => {
             field.classList.remove('active');
@@ -891,7 +947,8 @@ class App {
             type,
             date,
             duration: parseInt(duration),
-            notes
+            notes,
+            status: 'completed'
         };
 
         // Add type-specific fields
@@ -929,6 +986,30 @@ class App {
         } catch (error) {
             console.error('Erreur lors de l\'ajout:', error);
             this.showToast('Erreur lors de l\'ajout', 'error');
+        }
+    }
+
+    async handlePlanFormSubmit() {
+        const date = document.getElementById('planDate').value;
+        const type = document.getElementById('planType').value;
+        const note = document.getElementById('planNote').value;
+
+        const plannedSession = {
+            type,
+            date,
+            status: 'planned',
+            note,
+            plannedAt: new Date().toISOString()
+        };
+
+        try {
+            await this.db.addWorkout(plannedSession);
+            this.closePlanModal();
+            this.loadProgram();
+            this.showToast('Séance planifiée avec succès!');
+        } catch (error) {
+            console.error('Erreur lors de la planification:', error);
+            this.showToast('Erreur lors de la planification', 'error');
         }
     }
 

@@ -843,6 +843,15 @@ body {
     background: var(--bg-tertiary);
 }
 
+.calendar-day[data-date] {
+    cursor: pointer;
+}
+
+.calendar-day[data-date]:hover {
+    background: var(--bg-tertiary);
+    transform: scale(1.05);
+}
+
 .workout-dots {
     display: flex;
     gap: 2px;
@@ -859,6 +868,15 @@ body {
 .workout-dot.running { background: var(--running-color); }
 .workout-dot.crossfit { background: var(--crossfit-color); }
 .workout-dot.hyrox { background: var(--hyrox-color); }
+
+/* Planned sessions have a border instead of solid fill */
+.workout-dot.planned {
+    background: transparent;
+    border: 1px solid;
+}
+
+.workout-dot.planned.musculation { border-color: var(--musculation-color); }
+.workout-dot.planned.running { border-color: var(--running-color); }
 
 .legend {
     display: flex;

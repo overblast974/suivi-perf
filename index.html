@@ -465,9 +465,50 @@
                 </form>
             </div>
         </div>
+
+        <!-- Modal Plan Session -->
+        <div id="planSessionModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Planifier une séance</h3>
+                    <button class="btn-icon" id="closePlanModalBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <form id="planSessionForm" class="form">
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="planDate" class="input" required readonly>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Type d'entraînement</label>
+                        <select id="planType" class="select-input" required>
+                            <option value="">Sélectionner...</option>
+                            <option value="musculation">Musculation</option>
+                            <option value="running">Course / Trail</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Note (optionnelle)</label>
+                        <textarea id="planNote" class="textarea" rows="2" placeholder="Ex: Focus jambes, sortie longue..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelPlanBtn">Annuler</button>
+                        <button type="submit" class="btn-primary">Planifier</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="exercises-database.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
