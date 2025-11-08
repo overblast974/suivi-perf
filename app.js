@@ -160,6 +160,8 @@ class App {
         this.currentStatusFilter = 'all';
         this.currentSort = 'recent';
         this.editingWorkoutId = null;
+        this.currentExercises = [];
+        this.currentSets = [];
         this.charts = {
             frequency: null,
             volume: null,
@@ -178,6 +180,9 @@ class App {
             this.setupEventListeners();
             this.setupFormHandling();
             this.setupMenu();
+            this.setupExerciseForm();
+            this.setupSliders();
+            this.populateExercisesSuggestions();
             this.loadDashboard();
             this.setTodayDate();
         } catch (error) {
@@ -353,6 +358,237 @@ class App {
         document.getElementById('workoutDate').value = today;
     }
 
+    populateExercisesSuggestions() {
+        const datalist = document.getElementById('exercisesSuggestions');
+        if (!datalist || typeof ALL_EXERCISES === 'undefined') return;
+
+        datalist.innerHTML = ALL_EXERCISES.map(ex =>
+            `<option value="${ex}">`
+        ).join('');
+    }
+
+    setupExerciseForm() {
+        const addExerciseBtn = document.getElementById('addExerciseBtn');
+        const addExerciseForm = document.getElementById('addExerciseForm');
+        const addSetBtn = document.getElementById('addSetBtn');
+        const saveExerciseBtn = document.getElementById('saveExerciseBtn');
+        const cancelExerciseBtn = document.getElementById('cancelExerciseBtn');
+
+        if (!addExerciseBtn) return;
+
+        addExerciseBtn.addEventListener('click', () => {
+            addExerciseForm.style.display = 'block';
+            addExerciseBtn.style.display = 'none';
+            this.currentSets = [];
+            this.addSet();
+        });
+
+        cancelExerciseBtn.addEventListener('click', () => {
+            this.cancelExercise();
+        });
+
+        addSetBtn.addEventListener('click', () => {
+            this.addSet();
+        });
+
+        saveExerciseBtn.addEventListener('click', () => {
+            this.saveExercise();
+        });
+    }
+
+    addSet() {
+        const setsList = document.getElementById('setsList');
+        const setIndex = this.currentSets.length;
+
+        const setItem = document.createElement('div');
+        setItem.className = 'set-item';
+        setItem.innerHTML = `
+            <label>Série ${setIndex + 1}</label>
+            <input type="number" class="input set-reps" placeholder="Reps" min="1" step="1" data-index="${setIndex}">
+            <span>×</span>
+            <input type="number" class="input set-weight" placeholder="Poids (kg)" min="0" step="0.5" data-index="${setIndex}">
+            <button type="button" class="btn-remove-set" data-index="${setIndex}">×</button>
+        `;
+
+        setsList.appendChild(setItem);
+
+        this.currentSets.push({ reps: 0, weight: 0 });
+
+        // Add event listeners for the remove button
+        setItem.querySelector('.btn-remove-set').addEventListener('click', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            this.removeSet(index);
+        });
+
+        // Add input listeners
+        setItem.querySelector('.set-reps').addEventListener('input', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            this.currentSets[index].reps = parseInt(e.target.value) || 0;
+        });
+
+        setItem.querySelector('.set-weight').addEventListener('input', (e) => {
+            const index = parseInt(e.target.dataset.index);
+            this.currentSets[index].weight = parseFloat(e.target.value) || 0;
+        });
+    }
+
+    removeSet(index) {
+        this.currentSets.splice(index, 1);
+        this.renderSets();
+    }
+
+    renderSets() {
+        const setsList = document.getElementById('setsList');
+        setsList.innerHTML = '';
+
+        this.currentSets.forEach((set, index) => {
+            const setItem = document.createElement('div');
+            setItem.className = 'set-item';
+            setItem.innerHTML = `
+                <label>Série ${index + 1}</label>
+                <input type="number" class="input set-reps" placeholder="Reps" min="1" step="1" value="${set.reps || ''}" data-index="${index}">
+                <span>×</span>
+                <input type="number" class="input set-weight" placeholder="Poids (kg)" min="0" step="0.5" value="${set.weight || ''}" data-index="${index}">
+                <button type="button" class="btn-remove-set" data-index="${index}">×</button>
+            `;
+
+            setsList.appendChild(setItem);
+
+            setItem.querySelector('.btn-remove-set').addEventListener('click', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                this.removeSet(idx);
+            });
+
+            setItem.querySelector('.set-reps').addEventListener('input', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                this.currentSets[idx].reps = parseInt(e.target.value) || 0;
+            });
+
+            setItem.querySelector('.set-weight').addEventListener('input', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                this.currentSets[idx].weight = parseFloat(e.target.value) || 0;
+            });
+        });
+    }
+
+    saveExercise() {
+        const exerciseName = document.getElementById('exerciseName').value.trim();
+
+        if (!exerciseName) {
+            this.showToast('Veuillez entrer un nom d\'exercice', 'error');
+            return;
+        }
+
+        if (this.currentSets.length === 0 || !this.currentSets.some(s => s.reps > 0 && s.weight > 0)) {
+            this.showToast('Veuillez ajouter au moins une série valide', 'error');
+            return;
+        }
+
+        // Calculate volume for this exercise
+        const volume = this.currentSets.reduce((sum, set) => {
+            return sum + (set.reps * set.weight);
+        }, 0);
+
+        const exercise = {
+            name: exerciseName,
+            sets: [...this.currentSets],
+            volume: volume
+        };
+
+        this.currentExercises.push(exercise);
+        this.renderExercises();
+        this.updateTotalVolume();
+        this.cancelExercise();
+    }
+
+    cancelExercise() {
+        const addExerciseForm = document.getElementById('addExerciseForm');
+        const addExerciseBtn = document.getElementById('addExerciseBtn');
+
+        addExerciseForm.style.display = 'none';
+        addExerciseBtn.style.display = 'block';
+
+        document.getElementById('exerciseName').value = '';
+        document.getElementById('setsList').innerHTML = '';
+        this.currentSets = [];
+    }
+
+    renderExercises() {
+        const exercisesList = document.getElementById('exercisesList');
+
+        exercisesList.innerHTML = this.currentExercises.map((exercise, index) => {
+            const setsText = exercise.sets.map((set, i) =>
+                `S${i + 1}: ${set.reps} × ${set.weight}kg`
+            ).join(' • ');
+
+            return `
+                <div class="exercise-item">
+                    <div class="exercise-header">
+                        <span class="exercise-name">${exercise.name}</span>
+                        <div>
+                            <span class="exercise-volume">${exercise.volume.toFixed(1)} kg</span>
+                            <button type="button" class="btn-remove-exercise" data-index="${index}">Supprimer</button>
+                        </div>
+                    </div>
+                    <div class="exercise-sets">${setsText}</div>
+                </div>
+            `;
+        }).join('');
+
+        // Add event listeners for remove buttons
+        exercisesList.querySelectorAll('.btn-remove-exercise').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const index = parseInt(e.target.dataset.index);
+                this.currentExercises.splice(index, 1);
+                this.renderExercises();
+                this.updateTotalVolume();
+            });
+        });
+    }
+
+    updateTotalVolume() {
+        const totalVolume = this.currentExercises.reduce((sum, ex) => sum + ex.volume, 0);
+        document.getElementById('totalVolumeDisplay').value = totalVolume.toFixed(1) + ' kg';
+    }
+
+    setupSliders() {
+        // Musculation RPE
+        const rpeMuscu = document.getElementById('rpeMuscu');
+        const rpeValue = document.getElementById('rpeValue');
+        if (rpeMuscu && rpeValue) {
+            rpeMuscu.addEventListener('input', (e) => {
+                rpeValue.textContent = e.target.value;
+            });
+        }
+
+        // Musculation Forme
+        const formeMuscu = document.getElementById('formeMuscu');
+        const formeValueMuscu = document.getElementById('formeValueMuscu');
+        if (formeMuscu && formeValueMuscu) {
+            formeMuscu.addEventListener('input', (e) => {
+                formeValueMuscu.textContent = e.target.value;
+            });
+        }
+
+        // Running RPE
+        const rpeRun = document.getElementById('rpeRun');
+        const rpeValueRun = document.getElementById('rpeValueRun');
+        if (rpeRun && rpeValueRun) {
+            rpeRun.addEventListener('input', (e) => {
+                rpeValueRun.textContent = e.target.value;
+            });
+        }
+
+        // Running Forme
+        const formeRun = document.getElementById('formeRun');
+        const formeValueRun = document.getElementById('formeValueRun');
+        if (formeRun && formeValueRun) {
+            formeRun.addEventListener('input', (e) => {
+                formeValueRun.textContent = e.target.value;
+            });
+        }
+    }
+
     switchView(view) {
         // Update navigation
         document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -463,13 +699,19 @@ class App {
             // Completed session - show details
             details = `<span class="workout-detail">⏱️ ${workout.duration} min</span>`;
             if (workout.type === 'musculation' && workout.totalVolume) {
-                details += `<span class="workout-detail">💪 ${workout.totalVolume} kg</span>`;
+                details += `<span class="workout-detail">💪 ${workout.totalVolume.toFixed(0)} kg</span>`;
             }
             if (workout.type === 'running' && workout.distance) {
                 details += `<span class="workout-detail">📍 ${workout.distance} km</span>`;
                 if (workout.pace) {
                     details += `<span class="workout-detail">⚡ ${workout.pace} min/km</span>`;
                 }
+            }
+            if (workout.rpe) {
+                details += `<span class="workout-detail">RPE ${workout.rpe}/10</span>`;
+            }
+            if (workout.forme) {
+                details += `<span class="workout-detail">Forme ${workout.forme}/10</span>`;
             }
         }
 
@@ -1003,6 +1245,24 @@ class App {
         this.toggleConditionalFields('');
         this.setTodayDate();
         this.editingWorkoutId = null;
+
+        // Reset exercises
+        this.currentExercises = [];
+        this.currentSets = [];
+        document.getElementById('exercisesList').innerHTML = '';
+        document.getElementById('totalVolumeDisplay').value = '';
+        this.cancelExercise();
+
+        // Reset sliders
+        const rpeMuscu = document.getElementById('rpeMuscu');
+        const formeMuscu = document.getElementById('formeMuscu');
+        const rpeRun = document.getElementById('rpeRun');
+        const formeRun = document.getElementById('formeRun');
+
+        if (rpeMuscu) { rpeMuscu.value = 5; document.getElementById('rpeValue').textContent = '5'; }
+        if (formeMuscu) { formeMuscu.value = 5; document.getElementById('formeValueMuscu').textContent = '5'; }
+        if (rpeRun) { rpeRun.value = 5; document.getElementById('rpeValueRun').textContent = '5'; }
+        if (formeRun) { formeRun.value = 5; document.getElementById('formeValueRun').textContent = '5'; }
     }
 
     openPlanModal(dateStr) {
@@ -1049,13 +1309,28 @@ class App {
 
         // Add type-specific fields
         if (type === 'musculation') {
-            workout.exercises = document.getElementById('exercises').value;
-            workout.totalVolume = parseInt(document.getElementById('totalVolume').value) || 0;
+            if (this.currentExercises.length === 0) {
+                this.showToast('Veuillez ajouter au moins un exercice', 'error');
+                return;
+            }
+
+            workout.exercisesDetailed = this.currentExercises;
+            workout.totalVolume = this.currentExercises.reduce((sum, ex) => sum + ex.volume, 0);
+
+            const rpe = document.getElementById('rpeMuscu').value;
+            const forme = document.getElementById('formeMuscu').value;
+            workout.rpe = parseInt(rpe);
+            workout.forme = parseInt(forme);
         } else if (type === 'running') {
             workout.distance = parseFloat(document.getElementById('distance').value) || 0;
             workout.runTime = document.getElementById('runTime').value;
             workout.elevation = parseInt(document.getElementById('elevation').value) || 0;
             workout.pace = document.getElementById('pace').value;
+
+            const rpe = document.getElementById('rpeRun').value;
+            const forme = document.getElementById('formeRun').value;
+            workout.rpe = parseInt(rpe);
+            workout.forme = parseInt(forme);
         }
 
         try {

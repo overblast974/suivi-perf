@@ -433,11 +433,59 @@
                     <div id="musculationFields" class="conditional-fields" style="display: none;">
                         <div class="form-group">
                             <label>Exercices</label>
-                            <textarea id="exercises" class="textarea" rows="3" placeholder="Ex: Squat 4x10 @100kg&#10;Développé couché 3x8 @80kg"></textarea>
+                            <div id="exercisesList" class="exercises-list">
+                                <!-- Exercises will be added here -->
+                            </div>
+                            <button type="button" class="btn-secondary" id="addExerciseBtn" style="width: 100%; margin-top: 8px;">
+                                + Ajouter un exercice
+                            </button>
                         </div>
+
+                        <!-- Add Exercise Form (hidden by default) -->
+                        <div id="addExerciseForm" class="add-exercise-form" style="display: none;">
+                            <div class="form-group">
+                                <label>Nom de l'exercice</label>
+                                <input type="text" id="exerciseName" class="input" list="exercisesSuggestions" placeholder="Commencez à taper...">
+                                <datalist id="exercisesSuggestions">
+                                    <!-- Will be populated by JavaScript -->
+                                </datalist>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Séries</label>
+                                <div id="setsList" class="sets-list">
+                                    <!-- Sets will be added here -->
+                                </div>
+                                <button type="button" class="btn-small" id="addSetBtn">+ Ajouter série</button>
+                            </div>
+
+                            <div class="form-actions" style="gap: 8px;">
+                                <button type="button" class="btn-secondary" id="cancelExerciseBtn">Annuler</button>
+                                <button type="button" class="btn-primary" id="saveExerciseBtn">Valider exercice</button>
+                            </div>
+                        </div>
+
                         <div class="form-group">
-                            <label>Volume total (kg)</label>
-                            <input type="number" id="totalVolume" class="input" min="0">
+                            <label>Volume total</label>
+                            <input type="text" id="totalVolumeDisplay" class="input" readonly placeholder="Calculé automatiquement">
+                        </div>
+
+                        <div class="form-group">
+                            <label>RPE (1-10) <span id="rpeValue">5</span></label>
+                            <input type="range" id="rpeMuscu" class="slider" min="1" max="10" value="5">
+                            <div class="slider-labels">
+                                <span>1 - Très facile</span>
+                                <span>10 - Maximum</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Forme du jour (1-10) <span id="formeValueMuscu">5</span></label>
+                            <input type="range" id="formeMuscu" class="slider" min="1" max="10" value="5">
+                            <div class="slider-labels">
+                                <span>1 - Très fatigué</span>
+                                <span>10 - Excellent</span>
+                            </div>
                         </div>
                     </div>
 
@@ -458,6 +506,24 @@
                         <div class="form-group">
                             <label>Allure moyenne (min/km)</label>
                             <input type="text" id="pace" class="input" placeholder="5:30">
+                        </div>
+
+                        <div class="form-group">
+                            <label>RPE (1-10) <span id="rpeValueRun">5</span></label>
+                            <input type="range" id="rpeRun" class="slider" min="1" max="10" value="5">
+                            <div class="slider-labels">
+                                <span>1 - Très facile</span>
+                                <span>10 - Maximum</span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Forme du jour (1-10) <span id="formeValueRun">5</span></label>
+                            <input type="range" id="formeRun" class="slider" min="1" max="10" value="5">
+                            <div class="slider-labels">
+                                <span>1 - Très fatigué</span>
+                                <span>10 - Excellent</span>
+                            </div>
                         </div>
                     </div>
 
