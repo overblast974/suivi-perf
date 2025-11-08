@@ -217,6 +217,7 @@ class App {
             this.setupMenu();
             this.setupExerciseForm();
             this.setupSliders();
+            this.setupTooltips();
             this.populateExercisesSuggestions();
             this.loadDashboard();
             this.setTodayDate();
@@ -717,6 +718,37 @@ class App {
                 formeValueRun.textContent = e.target.value;
             });
         }
+    }
+
+    setupTooltips() {
+        // Add click handlers for all info tooltips
+        document.querySelectorAll('.info-tooltip').forEach(tooltip => {
+            tooltip.addEventListener('click', (e) => {
+                e.stopPropagation();
+
+                // Get the tooltip content element
+                const content = tooltip.querySelector('.info-tooltip-content');
+
+                // Close all other tooltips
+                document.querySelectorAll('.info-tooltip-content.active').forEach(other => {
+                    if (other !== content) {
+                        other.classList.remove('active');
+                    }
+                });
+
+                // Toggle current tooltip
+                content.classList.toggle('active');
+            });
+        });
+
+        // Close tooltips when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.info-tooltip')) {
+                document.querySelectorAll('.info-tooltip-content.active').forEach(content => {
+                    content.classList.remove('active');
+                });
+            }
+        });
     }
 
     switchView(view) {

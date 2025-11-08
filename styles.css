@@ -1413,6 +1413,88 @@ body {
     margin-top: 8px;
 }
 
+/* Info Tooltips */
+.info-tooltip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    color: var(--bg);
+    font-size: 12px;
+    font-weight: bold;
+    margin-left: 6px;
+    cursor: help;
+    position: relative;
+    vertical-align: middle;
+    transition: all 0.2s;
+}
+
+.info-tooltip:hover {
+    background: var(--primary);
+    transform: scale(1.1);
+}
+
+.info-tooltip-content {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    width: 280px;
+    max-width: 90vw;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+    display: none;
+    text-align: left;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+}
+
+.info-tooltip-content.active {
+    display: block;
+    animation: tooltipFadeIn 0.2s ease;
+}
+
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+.info-tooltip-content::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: var(--bg-secondary);
+}
+
+.info-tooltip-content h5 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+    color: var(--primary);
+}
+
+.info-tooltip-content p {
+    margin: 0;
+    color: var(--text-secondary);
+}
+
 /* Goals */
 .goal-card {
     background: var(--bg-secondary);

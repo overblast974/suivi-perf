@@ -298,7 +298,16 @@
 
                 <!-- ACWR and Alerts Section -->
                 <div id="acwrSection" class="section">
-                    <h3>Charge d'entraînement (ACWR)</h3>
+                    <h3>
+                        Charge d'entraînement (ACWR)
+                        <span class="info-tooltip" data-tooltip="acwr">
+                            ?
+                            <span class="info-tooltip-content">
+                                <h5>ACWR - Acute:Chronic Workload Ratio</h5>
+                                <p>Ratio entre la charge aiguë (7 derniers jours) et la charge chronique (28 derniers jours). Un ratio entre 0.8 et 1.3 est considéré comme sûr. Au-delà, le risque de blessure augmente significativement.</p>
+                            </span>
+                        </span>
+                    </h3>
                     <div class="acwr-container">
                         <div class="acwr-ratio">
                             <span class="acwr-label">Ratio Aiguë/Chronique</span>
@@ -328,7 +337,17 @@
 
                 <!-- Monotony and Strain Section -->
                 <div id="monotonySection" class="section" style="display: none;">
-                    <h3>Monotonie et Strain</h3>
+                    <h3>
+                        Monotonie et Strain
+                        <span class="info-tooltip" data-tooltip="monotonie">
+                            ?
+                            <span class="info-tooltip-content">
+                                <h5>Monotonie et Strain</h5>
+                                <p><strong>Monotonie:</strong> Mesure la variabilité de votre charge d'entraînement. Une monotonie élevée (>2) indique un manque de variété, ce qui peut augmenter le risque de surmenage.</p>
+                                <p style="margin-top: 8px;"><strong>Strain:</strong> Charge totale × Monotonie. Un strain élevé combiné à une forte monotonie est un signal d'alarme.</p>
+                            </span>
+                        </span>
+                    </h3>
                     <div class="metrics-grid-two">
                         <div class="metric-card">
                             <h4>Monotonie</h4>
@@ -542,7 +561,16 @@
                         </div>
 
                         <div class="form-group">
-                            <label>RPE (1-10) <span id="rpeValue">5</span></label>
+                            <label>
+                                RPE (1-10) <span id="rpeValue">5</span>
+                                <span class="info-tooltip" data-tooltip="rpe">
+                                    ?
+                                    <span class="info-tooltip-content">
+                                        <h5>RPE - Rate of Perceived Exertion</h5>
+                                        <p>Échelle de perception de l'effort de 1 à 10. Permet de quantifier l'intensité ressentie pendant l'entraînement. Utilisé pour calculer le TRIMP (charge d'entraînement).</p>
+                                    </span>
+                                </span>
+                            </label>
                             <input type="range" id="rpeMuscu" class="slider" min="1" max="10" value="5">
                             <div class="slider-labels">
                                 <span>1 - Très facile</span>
@@ -551,7 +579,16 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Forme du jour (1-10) <span id="formeValueMuscu">5</span></label>
+                            <label>
+                                Forme du jour (1-10) <span id="formeValueMuscu">5</span>
+                                <span class="info-tooltip" data-tooltip="forme">
+                                    ?
+                                    <span class="info-tooltip-content">
+                                        <h5>Forme du jour</h5>
+                                        <p>Votre état de forme général avant l'entraînement (1=très fatigué, 10=en pleine forme). Permet de détecter la fatigue accumulée et d'ajuster la charge. Un écart croissant entre RPE et Forme indique un surmenage potentiel.</p>
+                                    </span>
+                                </span>
+                            </label>
                             <input type="range" id="formeMuscu" class="slider" min="1" max="10" value="5">
                             <div class="slider-labels">
                                 <span>1 - Très fatigué</span>
@@ -580,7 +617,16 @@
                         </div>
 
                         <div class="form-group">
-                            <label>RPE (1-10) <span id="rpeValueRun">5</span></label>
+                            <label>
+                                RPE (1-10) <span id="rpeValueRun">5</span>
+                                <span class="info-tooltip" data-tooltip="rpe-run">
+                                    ?
+                                    <span class="info-tooltip-content">
+                                        <h5>RPE - Rate of Perceived Exertion</h5>
+                                        <p>Échelle de perception de l'effort de 1 à 10. Permet de quantifier l'intensité ressentie pendant l'entraînement. Utilisé pour calculer le TRIMP (charge d'entraînement).</p>
+                                    </span>
+                                </span>
+                            </label>
                             <input type="range" id="rpeRun" class="slider" min="1" max="10" value="5">
                             <div class="slider-labels">
                                 <span>1 - Très facile</span>
@@ -589,7 +635,16 @@
                         </div>
 
                         <div class="form-group">
-                            <label>Forme du jour (1-10) <span id="formeValueRun">5</span></label>
+                            <label>
+                                Forme du jour (1-10) <span id="formeValueRun">5</span>
+                                <span class="info-tooltip" data-tooltip="forme-run">
+                                    ?
+                                    <span class="info-tooltip-content">
+                                        <h5>Forme du jour</h5>
+                                        <p>Votre état de forme général avant l'entraînement (1=très fatigué, 10=en pleine forme). Permet de détecter la fatigue accumulée et d'ajuster la charge. Un écart croissant entre RPE et Forme indique un surmenage potentiel.</p>
+                                    </span>
+                                </span>
+                            </label>
                             <input type="range" id="formeRun" class="slider" min="1" max="10" value="5">
                             <div class="slider-labels">
                                 <span>1 - Très fatigué</span>
