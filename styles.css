@@ -232,6 +232,13 @@ body {
     margin-bottom: 32px;
 }
 
+.stats-grid-two {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
 .stat-card {
     background: var(--bg-secondary);
     border: 1px solid var(--border);
