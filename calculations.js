@@ -296,9 +296,10 @@ class WorkoutCalculations {
     }
 
     /**
-     * Calculate estimated maximum heart rate based on age and gender
+     * Calculate estimated maximum heart rate based on age
+     * Uses Tanaka formula (2001) - more reliable than classic 220-age
      * @param {number} age - Age in years
-     * @param {string} gender - 'male', 'female', or 'other'
+     * @param {string} gender - 'male', 'female', or 'other' (not used in Tanaka but kept for compatibility)
      * @returns {number} - Estimated FC max in bpm
      */
     static calculateFCMax(age, gender = 'male') {
@@ -306,14 +307,9 @@ class WorkoutCalculations {
             return null;
         }
 
-        // Use gender-specific formulas
-        if (gender === 'female') {
-            // Gulati formula for women: 206 - (0.88 × age)
-            return Math.round(206 - (0.88 * age));
-        } else {
-            // Classic formula for men: 220 - age
-            return Math.round(220 - age);
-        }
+        // Tanaka formula (2001): FC max = 208 - (0.7 × age)
+        // More accurate than 220-age, validated on large populations
+        return Math.round(208 - (0.7 * age));
     }
 
     /**

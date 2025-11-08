@@ -187,7 +187,7 @@ class DatabaseManager {
 // App Manager
 class App {
     constructor() {
-        this.db = new DatabaseManager();
+        this.db = new SupabaseDatabase();
         this.currentView = 'dashboard';
         this.currentFilter = 'all';
         this.currentStatusFilter = 'all';
@@ -478,11 +478,20 @@ class App {
                         this.switchView('profile');
                         break;
                     case 'about':
-                        this.showToast('Suivi Performance v1.0');
+                        this.showToast('TrainSmart v2.0 - Powered by Supabase');
+                        break;
+                    case 'logout':
+                        this.handleLogout();
                         break;
                 }
             });
         });
+    }
+
+    async handleLogout() {
+        if (confirm('Êtes-vous sûr de vouloir vous déconnecter ?')) {
+            await this.db.logout();
+        }
     }
 
     setupFormHandling() {
