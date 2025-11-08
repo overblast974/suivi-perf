@@ -165,7 +165,9 @@ class App {
         this.charts = {
             frequency: null,
             volume: null,
-            performance: null
+            performance: null,
+            acwrTrend: null,
+            rpeTrend: null
         };
         this.calendar = {
             currentMonth: new Date().getMonth(),
@@ -938,6 +940,10 @@ class App {
         // Display monotony and strain
         this.displayMonotonyStrain(workouts);
 
+        // Display advanced charts
+        this.updateACWRTrendChart(workouts);
+        this.updateRPETrendChart(workouts);
+
         // Filter by period
         const now = new Date();
         const days = period === 'week' ? 7 : period === 'month' ? 30 :
@@ -1217,6 +1223,188 @@ class App {
                     },
                     x: {
                         ticks: { color: '#64748b', maxRotation: 45, minRotation: 45 },
+                        grid: { color: '#334155' }
+                    }
+                }
+            }
+        });
+    }
+
+    updateACWRTrendChart(workouts) {
+        const canvas = document.getElementById('acwrTrendChart');
+        if (!canvas || typeof WorkoutCalculations === 'undefined') return;
+
+        const ctx = canvas.getContext('2d');
+
+        if (this.charts.acwrTrend) {
+            this.charts.acwrTrend.destroy();
+        }
+
+        // Calculate ACWR for each week over the last 12 weeks
+        const now = new Date();
+        const weeks = [];
+        const acwrData = [];
+        const safeZoneMin = [];
+        const safeZoneMax = [];
+
+        for (let i = 11; i >= 0; i--) {
+            const weekDate = new Date(now);
+            weekDate.setDate(weekDate.getDate() - (i * 7));
+
+            const acwr = WorkoutCalculations.calculateACWR(workouts, weekDate);
+
+            weeks.push(`S-${i}`);
+            acwrData.push(parseFloat(acwr.ratio));
+            safeZoneMin.push(0.8);
+            safeZoneMax.push(1.3);
+        }
+
+        this.charts.acwrTrend = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: weeks,
+                datasets: [
+                    {
+                        label: 'ACWR',
+                        data: acwrData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                        fill: false,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    },
+                    {
+                        label: 'Zone sûre min (0.8)',
+                        data: safeZoneMin,
+                        borderColor: '#10b981',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        fill: false,
+                        pointRadius: 0
+                    },
+                    {
+                        label: 'Zone sûre max (1.3)',
+                        data: safeZoneMax,
+                        borderColor: '#10b981',
+                        borderDash: [5, 5],
+                        borderWidth: 1,
+                        fill: '-1',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { color: '#cbd5e1', font: { size: 11 } }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 2.0,
+                        ticks: {
+                            color: '#64748b',
+                            stepSize: 0.2
+                        },
+                        grid: { color: '#334155' }
+                    },
+                    x: {
+                        ticks: { color: '#64748b' },
+                        grid: { color: '#334155' }
+                    }
+                }
+            }
+        });
+    }
+
+    updateRPETrendChart(workouts) {
+        const canvas = document.getElementById('rpeTrendChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+
+        if (this.charts.rpeTrend) {
+            this.charts.rpeTrend.destroy();
+        }
+
+        // Get last 30 workouts with RPE and Forme data
+        const workoutsWithData = workouts
+            .filter(w => w.rpe && w.forme)
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .slice(-30);
+
+        if (workoutsWithData.length === 0) {
+            return;
+        }
+
+        const labels = workoutsWithData.map(w => {
+            const date = new Date(w.date);
+            return date.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' });
+        });
+
+        const rpeData = workoutsWithData.map(w => w.rpe);
+        const formeData = workoutsWithData.map(w => w.forme);
+
+        this.charts.rpeTrend = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'RPE (Effort perçu)',
+                        data: rpeData,
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.3,
+                        fill: false,
+                        borderWidth: 2,
+                        pointRadius: 3
+                    },
+                    {
+                        label: 'Forme du jour',
+                        data: formeData,
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.3,
+                        fill: false,
+                        borderWidth: 2,
+                        pointRadius: 3
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { color: '#cbd5e1' }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 10,
+                        ticks: {
+                            color: '#64748b',
+                            stepSize: 1
+                        },
+                        grid: { color: '#334155' }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#64748b',
+                            maxRotation: 45,
+                            minRotation: 45,
+                            maxTicksLimit: 15
+                        },
                         grid: { color: '#334155' }
                     }
                 }

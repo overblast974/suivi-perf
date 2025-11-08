@@ -343,6 +343,28 @@
                     <div id="monotonyWarning" class="alert-box" style="display: none;"></div>
                 </div>
 
+                <!-- ACWR Trend Chart -->
+                <div class="section" id="acwrTrendSection">
+                    <h3>Évolution ACWR (12 semaines)</h3>
+                    <div class="chart-container">
+                        <canvas id="acwrTrendChart"></canvas>
+                    </div>
+                    <p class="chart-help">
+                        🟢 Zone sûre (0.8-1.3) • 🟠 Attention (1.3-1.5) • 🔴 Risque élevé (>1.5)
+                    </p>
+                </div>
+
+                <!-- RPE and Forme Trend Chart -->
+                <div class="section" id="rpeTrendSection">
+                    <h3>Évolution RPE et Forme</h3>
+                    <div class="chart-container">
+                        <canvas id="rpeTrendChart"></canvas>
+                    </div>
+                    <p class="chart-help">
+                        Surveillez l'écart entre RPE et Forme - un écart croissant peut indiquer de la fatigue
+                    </p>
+                </div>
+
                 <div class="section">
                     <h3>Fréquence d'entraînement</h3>
                     <div class="chart-container">
