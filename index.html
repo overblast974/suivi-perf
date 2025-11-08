@@ -856,15 +856,20 @@
                     </div>
 
                     <div class="form-group">
-                        <label>Fréquence cardiaque max (bpm)</label>
+                        <label>Fréquence cardiaque max (bpm) - Optionnel</label>
                         <input type="number" id="fcMaxInput" class="input" min="120" max="220" placeholder="Ex: 190">
-                        <small style="color: var(--text-muted); font-size: 12px;">FC maximale (220 - âge est une approximation)</small>
+                        <small style="color: var(--text-muted); font-size: 12px;">
+                            ✨ Calculée automatiquement depuis votre âge/sexe si non renseignée.
+                            Entrez votre FC max mesurée pour plus de précision.
+                        </small>
                     </div>
 
                     <div class="form-group">
                         <label>Fréquence cardiaque repos (bpm)</label>
                         <input type="number" id="fcReposInput" class="input" min="30" max="100" placeholder="Ex: 55">
-                        <small style="color: var(--text-muted); font-size: 12px;">Mesuré le matin au réveil</small>
+                        <small style="color: var(--text-muted); font-size: 12px;">
+                            Mesuré le matin au réveil. Permet d'utiliser la méthode FC de réserve (Karvonen) pour un calcul plus précis des zones.
+                        </small>
                     </div>
 
                     <div class="form-actions">

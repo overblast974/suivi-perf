@@ -296,6 +296,27 @@ class WorkoutCalculations {
     }
 
     /**
+     * Calculate estimated maximum heart rate based on age and gender
+     * @param {number} age - Age in years
+     * @param {string} gender - 'male', 'female', or 'other'
+     * @returns {number} - Estimated FC max in bpm
+     */
+    static calculateFCMax(age, gender = 'male') {
+        if (!age || age < 10 || age > 100) {
+            return null;
+        }
+
+        // Use gender-specific formulas
+        if (gender === 'female') {
+            // Gulati formula for women: 206 - (0.88 × age)
+            return Math.round(206 - (0.88 * age));
+        } else {
+            // Classic formula for men: 220 - age
+            return Math.round(220 - age);
+        }
+    }
+
+    /**
      * Calculate heart rate training zones based on FC max
      * @param {number} fcMax - Maximum heart rate in bpm
      * @param {number} fcRepos - Resting heart rate in bpm (optional)

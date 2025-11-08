@@ -1309,6 +1309,20 @@ body {
 .workout-dot.crossfit { background: var(--crossfit-color); }
 .workout-dot.hyrox { background: var(--hyrox-color); }
 
+.calendar-goal-indicator {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 12px;
+    line-height: 1;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
 /* Planned sessions have a border instead of solid fill */
 .workout-dot.planned {
     background: transparent;

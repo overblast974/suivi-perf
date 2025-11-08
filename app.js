@@ -1028,6 +1028,7 @@ class App {
             `${monthNames[currentMonth]} ${currentYear}`;
 
         const workouts = await this.db.getAllWorkouts();
+        const goals = await this.db.getAllGoals();
 
         // Get first day of month and number of days
         const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -1060,6 +1061,9 @@ class App {
             const plannedSessions = dayWorkouts.filter(w => w.status === 'planned');
             const completedSessions = dayWorkouts.filter(w => w.status === 'completed');
 
+            // Find goals with deadline on this date
+            const dayGoals = goals.filter(g => g.deadline === dateStr && g.status !== 'completed');
+
             const isToday = today.getDate() === day &&
                            today.getMonth() === currentMonth &&
                            today.getFullYear() === currentYear;
@@ -1071,6 +1075,11 @@ class App {
             html += `
                 <div class="${classes.join(' ')}" data-date="${dateStr}">
                     <span>${day}</span>
+                    ${dayGoals.length > 0 ? `
+                        <div class="calendar-goal-indicator" title="Objectif: ${dayGoals[0].description}">
+                            🎯
+                        </div>
+                    ` : ''}
                     ${completedSessions.length > 0 ? `
                         <div class="workout-dots">
                             ${completedSessions.slice(0, 4).map(w =>
@@ -1769,31 +1778,52 @@ class App {
             paceContainer.style.display = 'none';
         }
 
-        // Calculate and display HR zones if FC max is available
-        if (profile.metrics && profile.metrics.fcMax && typeof WorkoutCalculations !== 'undefined') {
-            const hrZones = WorkoutCalculations.calculateHeartRateZones(
-                profile.metrics.fcMax,
-                profile.metrics.fcRepos || null
-            );
+        // Calculate and display HR zones
+        // Try to use provided FC max, otherwise calculate from age/gender
+        if (typeof WorkoutCalculations !== 'undefined') {
+            let fcMax = profile.metrics?.fcMax;
+            let fcMaxSource = 'Mesurée';
 
-            if (hrZones) {
-                hasZones = true;
-                hrContainer.style.display = 'block';
-                document.getElementById('hrMethodDisplay').textContent = `(Méthode: ${hrZones.method})`;
+            // If no FC max provided but we have age and gender, calculate it
+            if (!fcMax && profile.userInfo?.age && profile.userInfo?.gender) {
+                fcMax = WorkoutCalculations.calculateFCMax(profile.userInfo.age, profile.userInfo.gender);
+                fcMaxSource = 'Estimée';
+            }
 
-                const hrZonesList = document.getElementById('hrZonesList');
-                hrZonesList.innerHTML = hrZones.zones.map(zone => `
-                    <div class="zone-card" style="border-left-color: ${zone.color};">
-                        <div class="zone-info">
-                            <h5>Zone ${zone.number} - ${zone.name}</h5>
-                            <p>${zone.description}</p>
+            if (fcMax) {
+                const hrZones = WorkoutCalculations.calculateHeartRateZones(
+                    fcMax,
+                    profile.metrics?.fcRepos || null
+                );
+
+                if (hrZones) {
+                    hasZones = true;
+                    hrContainer.style.display = 'block';
+
+                    // Show method and source of FC max
+                    const methodText = hrZones.method === 'Karvonen'
+                        ? `FC réserve (Karvonen) - FCmax ${fcMaxSource.toLowerCase()}: ${fcMax} bpm`
+                        : `% FCmax - FCmax ${fcMaxSource.toLowerCase()}: ${fcMax} bpm`;
+                    document.getElementById('hrMethodDisplay').textContent = `(${methodText})`;
+
+                    const hrZonesList = document.getElementById('hrZonesList');
+                    hrZonesList.innerHTML = hrZones.zones.map(zone => `
+                        <div class="zone-card" style="border-left-color: ${zone.color};">
+                            <div class="zone-info">
+                                <h5>Zone ${zone.number} - ${zone.name}</h5>
+                                <p>${zone.description}</p>
+                            </div>
+                            <div class="zone-range">
+                                <span class="zone-number">${zone.number}</span>
+                                <span class="zone-values">${zone.min} - ${zone.max} bpm</span>
+                            </div>
                         </div>
-                        <div class="zone-range">
-                            <span class="zone-number">${zone.number}</span>
-                            <span class="zone-values">${zone.min} - ${zone.max} bpm</span>
-                        </div>
-                    </div>
-                `).join('');
+                    `).join('');
+                } else {
+                    hrContainer.style.display = 'none';
+                }
+            } else {
+                hrContainer.style.display = 'none';
             }
         } else {
             hrContainer.style.display = 'none';
