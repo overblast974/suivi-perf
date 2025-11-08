@@ -669,6 +669,63 @@
             </div>
         </div>
 
+        <!-- Modal Objectifs -->
+        <div id="goalsModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Mes objectifs</h3>
+                    <button class="btn-icon" id="closeGoalsModalBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+
+                <div style="max-height: 50vh; overflow-y: auto; margin-bottom: 20px;" id="goalsListContainer">
+                    <!-- Existing goals will be displayed here -->
+                </div>
+
+                <form id="goalsForm" class="form">
+                    <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 20px;">
+                        Définissez vos objectifs d'entraînement pour rester motivé et suivre votre progression.
+                    </p>
+
+                    <div class="form-group">
+                        <label>Type d'objectif</label>
+                        <select id="goalType" class="input" required>
+                            <option value="general">Général</option>
+                            <option value="musculation">Musculation</option>
+                            <option value="running">Course à pied</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Objectif</label>
+                        <input type="text" id="goalDescription" class="input" placeholder="Ex: Courir un 10km en moins de 50 minutes" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Valeur cible (optionnel)</label>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 8px;">
+                            <input type="number" id="goalTarget" class="input" step="0.1" placeholder="Ex: 50">
+                            <input type="text" id="goalUnit" class="input" placeholder="Ex: km, kg, min">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Date limite (optionnel)</label>
+                        <input type="date" id="goalDeadline" class="input">
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelGoalBtn">Annuler</button>
+                        <button type="submit" class="btn-primary">Ajouter l'objectif</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- Modal Marqueurs Physiologiques -->
         <div id="metricsModal" class="modal">
             <div class="modal-content">
@@ -712,6 +769,84 @@
 
                     <div class="form-actions">
                         <button type="button" class="btn-secondary" id="cancelMetricsBtn">Annuler</button>
+                        <button type="submit" class="btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Informations Personnelles -->
+        <div id="userInfoModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Informations personnelles</h3>
+                    <button class="btn-icon" id="closeUserInfoModalBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <form id="userInfoForm" class="form">
+                    <div class="form-group">
+                        <label>Nom</label>
+                        <input type="text" id="userNameInput" class="input" placeholder="Ex: Jean Dupont" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Âge</label>
+                        <input type="number" id="userAgeInput" class="input" min="10" max="120" placeholder="Ex: 30" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Sexe</label>
+                        <select id="userGenderInput" class="input" required>
+                            <option value="">Sélectionner</option>
+                            <option value="male">Homme</option>
+                            <option value="female">Femme</option>
+                            <option value="other">Autre</option>
+                        </select>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelUserInfoBtn">Annuler</button>
+                        <button type="submit" class="btn-primary">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Modal Données Anthropométriques -->
+        <div id="anthropoModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Données anthropométriques</h3>
+                    <button class="btn-icon" id="closeAnthropoModalBtn">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </button>
+                </div>
+                <form id="anthropoForm" class="form">
+                    <div class="form-group">
+                        <label>Poids (kg)</label>
+                        <input type="number" id="weightInput" class="input" step="0.1" min="30" max="300" placeholder="Ex: 75.5" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Taille (cm)</label>
+                        <input type="number" id="heightInput" class="input" min="100" max="250" placeholder="Ex: 175" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Pourcentage de masse grasse (%)</label>
+                        <input type="number" id="bodyFatInput" class="input" step="0.1" min="3" max="50" placeholder="Ex: 15.0">
+                        <small style="color: var(--text-muted); font-size: 12px;">Optionnel - Mesuré par impédancemètre ou pli cutané</small>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" id="cancelAnthropoBtn">Annuler</button>
                         <button type="submit" class="btn-primary">Enregistrer</button>
                     </div>
                 </form>

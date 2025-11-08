@@ -149,6 +149,39 @@ class DatabaseManager {
             request.onerror = () => reject(request.error);
         });
     }
+
+    async getGoal(id) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['goals'], 'readonly');
+            const store = transaction.objectStore('goals');
+            const request = store.get(id);
+
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async updateGoal(id, data) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['goals'], 'readwrite');
+            const store = transaction.objectStore('goals');
+            const request = store.put({ ...data, id });
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    async deleteGoal(id) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['goals'], 'readwrite');
+            const store = transaction.objectStore('goals');
+            const request = store.delete(id);
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
 }
 
 // App Manager
@@ -284,8 +317,8 @@ class App {
         const editMetricsBtn = document.getElementById('editMetricsBtn');
         const editGoalsBtn = document.getElementById('editGoalsBtn');
 
-        if (editUserInfoBtn) editUserInfoBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
-        if (editAnthropoBtn) editAnthropoBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
+        if (editUserInfoBtn) editUserInfoBtn.addEventListener('click', () => this.openUserInfoModal());
+        if (editAnthropoBtn) editAnthropoBtn.addEventListener('click', () => this.openAnthropoModal());
         if (editMetricsBtn) editMetricsBtn.addEventListener('click', () => this.openMetricsModal());
         if (editGoalsBtn) editGoalsBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
 
@@ -294,6 +327,48 @@ class App {
         const cancelMetricsBtn = document.getElementById('cancelMetricsBtn');
         if (closeMetricsModalBtn) closeMetricsModalBtn.addEventListener('click', () => this.closeMetricsModal());
         if (cancelMetricsBtn) cancelMetricsBtn.addEventListener('click', () => this.closeMetricsModal());
+
+        // User info modal controls
+        const closeUserInfoModalBtn = document.getElementById('closeUserInfoModalBtn');
+        const cancelUserInfoBtn = document.getElementById('cancelUserInfoBtn');
+        if (closeUserInfoModalBtn) closeUserInfoModalBtn.addEventListener('click', () => this.closeUserInfoModal());
+        if (cancelUserInfoBtn) cancelUserInfoBtn.addEventListener('click', () => this.closeUserInfoModal());
+
+        const userInfoModal = document.getElementById('userInfoModal');
+        if (userInfoModal) {
+            userInfoModal.addEventListener('click', (e) => {
+                if (e.target.id === 'userInfoModal') this.closeUserInfoModal();
+            });
+        }
+
+        const userInfoForm = document.getElementById('userInfoForm');
+        if (userInfoForm) {
+            userInfoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleUserInfoFormSubmit();
+            });
+        }
+
+        // Anthropo modal controls
+        const closeAnthropoModalBtn = document.getElementById('closeAnthropoModalBtn');
+        const cancelAnthropoBtn = document.getElementById('cancelAnthropoBtn');
+        if (closeAnthropoModalBtn) closeAnthropoModalBtn.addEventListener('click', () => this.closeAnthropoModal());
+        if (cancelAnthropoBtn) cancelAnthropoBtn.addEventListener('click', () => this.closeAnthropoModal());
+
+        const anthropoModal = document.getElementById('anthropoModal');
+        if (anthropoModal) {
+            anthropoModal.addEventListener('click', (e) => {
+                if (e.target.id === 'anthropoModal') this.closeAnthropoModal();
+            });
+        }
+
+        const anthropoForm = document.getElementById('anthropoForm');
+        if (anthropoForm) {
+            anthropoForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleAnthropoFormSubmit();
+            });
+        }
 
         // Workout details modal controls
         const closeDetailsModalBtn = document.getElementById('closeDetailsModalBtn');
@@ -309,10 +384,35 @@ class App {
             });
         }
 
-        // Goal button
+        // Goal button and modal
         const addGoalBtn = document.getElementById('addGoalBtn');
         if (addGoalBtn) {
-            addGoalBtn.addEventListener('click', () => this.showToast('Fonctionnalité en développement'));
+            addGoalBtn.addEventListener('click', () => this.openGoalsModal());
+        }
+
+        // Goals modal controls
+        const closeGoalsModalBtn = document.getElementById('closeGoalsModalBtn');
+        const cancelGoalBtn = document.getElementById('cancelGoalBtn');
+        if (closeGoalsModalBtn) closeGoalsModalBtn.addEventListener('click', () => this.closeGoalsModal());
+        if (cancelGoalBtn) cancelGoalBtn.addEventListener('click', () => this.closeGoalsModal());
+
+        // Click outside modal to close
+        const goalsModal = document.getElementById('goalsModal');
+        if (goalsModal) {
+            goalsModal.addEventListener('click', (e) => {
+                if (e.target.id === 'goalsModal') {
+                    this.closeGoalsModal();
+                }
+            });
+        }
+
+        // Goals form submission
+        const goalsForm = document.getElementById('goalsForm');
+        if (goalsForm) {
+            goalsForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleGoalFormSubmit();
+            });
         }
     }
 
@@ -1528,19 +1628,31 @@ class App {
     async loadProfile() {
         const profile = await this.db.getProfile();
 
-        if (profile.name) {
-            document.getElementById('userName').textContent = profile.name;
+        // Update user name in header
+        if (profile.userInfo && profile.userInfo.name) {
+            document.getElementById('userName').textContent = profile.userInfo.name;
+        } else {
+            document.getElementById('userName').textContent = 'Athlète';
         }
 
         // Display profile data if available
         if (profile.userInfo) {
+            const genderLabels = { male: 'Homme', female: 'Femme', other: 'Autre' };
+            const genderText = profile.userInfo.gender ? genderLabels[profile.userInfo.gender] : '';
             document.getElementById('userInfoDisplay').textContent =
-                `${profile.userInfo.name || ''}, ${profile.userInfo.age || ''} ans`;
+                `${profile.userInfo.name || ''}, ${profile.userInfo.age || ''} ans, ${genderText || ''}`.replace(/, $/, '');
+        } else {
+            document.getElementById('userInfoDisplay').textContent = 'Non renseigné';
         }
 
         if (profile.anthropo) {
-            document.getElementById('anthropoDisplay').textContent =
-                `${profile.anthropo.weight || ''} kg, ${profile.anthropo.height || ''} cm`;
+            let anthropoText = `${profile.anthropo.weight || ''} kg, ${profile.anthropo.height || ''} cm`;
+            if (profile.anthropo.bmi) {
+                anthropoText += ` (IMC: ${profile.anthropo.bmi})`;
+            }
+            document.getElementById('anthropoDisplay').textContent = anthropoText;
+        } else {
+            document.getElementById('anthropoDisplay').textContent = 'Non renseigné';
         }
 
         // Display metrics
@@ -1656,6 +1768,184 @@ class App {
         document.getElementById('workoutDetailsModal').classList.remove('active');
         document.body.style.overflow = '';
         document.getElementById('workoutDetailsContent').innerHTML = '';
+    }
+
+    async openGoalsModal() {
+        await this.loadGoals();
+        document.getElementById('goalsModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeGoalsModal() {
+        document.getElementById('goalsModal').classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('goalsForm').reset();
+    }
+
+    async loadGoals() {
+        const goals = await this.db.getAllGoals();
+        const container = document.getElementById('goalsListContainer');
+
+        if (goals.length === 0) {
+            container.innerHTML = `
+                <div class="goals-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="M12 6v6l4 2"></path>
+                    </svg>
+                    <p>Aucun objectif défini</p>
+                    <p style="font-size: 13px; margin-top: 8px;">Créez votre premier objectif pour commencer !</p>
+                </div>
+            `;
+            return;
+        }
+
+        // Sort goals: active first, then by deadline
+        const sortedGoals = goals.sort((a, b) => {
+            if (a.status === 'completed' && b.status !== 'completed') return 1;
+            if (a.status !== 'completed' && b.status === 'completed') return -1;
+            if (a.deadline && b.deadline) return new Date(a.deadline) - new Date(b.deadline);
+            if (a.deadline && !b.deadline) return -1;
+            if (!a.deadline && b.deadline) return 1;
+            return 0;
+        });
+
+        container.innerHTML = sortedGoals.map(goal => this.createGoalCard(goal)).join('');
+
+        // Add event listeners for goal actions
+        container.querySelectorAll('[data-goal-complete]').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const goalId = parseInt(e.currentTarget.dataset.goalComplete);
+                await this.completeGoal(goalId);
+            });
+        });
+
+        container.querySelectorAll('[data-goal-delete]').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const goalId = parseInt(e.currentTarget.dataset.goalDelete);
+                if (confirm('Êtes-vous sûr de vouloir supprimer cet objectif ?')) {
+                    await this.deleteGoal(goalId);
+                }
+            });
+        });
+    }
+
+    createGoalCard(goal) {
+        const typeLabels = {
+            'general': 'Général',
+            'musculation': 'Musculation',
+            'running': 'Course'
+        };
+
+        const isCompleted = goal.status === 'completed';
+        const now = new Date();
+        const deadline = goal.deadline ? new Date(goal.deadline) : null;
+        const isOverdue = deadline && deadline < now && !isCompleted;
+
+        let deadlineHTML = '';
+        if (deadline) {
+            const formattedDate = deadline.toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+            deadlineHTML = `
+                <div class="goal-deadline ${isOverdue ? 'overdue' : ''}">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    ${isOverdue ? '⚠️ ' : ''}${formattedDate}
+                </div>
+            `;
+        }
+
+        let targetHTML = '';
+        if (goal.target || goal.unit) {
+            targetHTML = `<div class="goal-target">🎯 Cible: ${goal.target || ''} ${goal.unit || ''}</div>`;
+        }
+
+        const actionsHTML = !isCompleted ? `
+            <div class="goal-actions">
+                <button class="goal-action-btn complete" data-goal-complete="${goal.id}">
+                    ✓ Terminé
+                </button>
+                <button class="goal-action-btn delete" data-goal-delete="${goal.id}">
+                    🗑️ Supprimer
+                </button>
+            </div>
+        ` : '';
+
+        return `
+            <div class="goal-card ${isCompleted ? 'completed' : ''}">
+                <div class="goal-card-header">
+                    <span class="goal-type-badge ${goal.type}">${typeLabels[goal.type]}</span>
+                    ${isCompleted ? '<span style="color: var(--success); font-size: 20px;">✓</span>' : ''}
+                </div>
+                <div class="goal-description">${goal.description}</div>
+                ${targetHTML}
+                ${deadlineHTML}
+                ${actionsHTML}
+            </div>
+        `;
+    }
+
+    async handleGoalFormSubmit() {
+        const type = document.getElementById('goalType').value;
+        const description = document.getElementById('goalDescription').value.trim();
+        const target = parseFloat(document.getElementById('goalTarget').value) || null;
+        const unit = document.getElementById('goalUnit').value.trim() || null;
+        const deadline = document.getElementById('goalDeadline').value || null;
+
+        if (!description) {
+            this.showToast('Veuillez entrer un objectif', 'error');
+            return;
+        }
+
+        const goal = {
+            type,
+            description,
+            target,
+            unit,
+            deadline,
+            status: 'active',
+            createdAt: new Date().toISOString()
+        };
+
+        try {
+            await this.db.addGoal(goal);
+            document.getElementById('goalsForm').reset();
+            await this.loadGoals();
+            this.showToast('Objectif ajouté avec succès !', 'success');
+        } catch (error) {
+            console.error('Erreur lors de l\'ajout de l\'objectif:', error);
+            this.showToast('Erreur lors de l\'ajout de l\'objectif', 'error');
+        }
+    }
+
+    async completeGoal(goalId) {
+        try {
+            const goal = await this.db.getGoal(goalId);
+            if (!goal) return;
+
+            await this.db.updateGoal(goalId, { ...goal, status: 'completed' });
+            await this.loadGoals();
+            this.showToast('Objectif marqué comme terminé !', 'success');
+        } catch (error) {
+            console.error('Erreur:', error);
+            this.showToast('Erreur lors de la mise à jour', 'error');
+        }
+    }
+
+    async deleteGoal(goalId) {
+        try {
+            await this.db.deleteGoal(goalId);
+            await this.loadGoals();
+            this.showToast('Objectif supprimé', 'success');
+        } catch (error) {
+            console.error('Erreur:', error);
+            this.showToast('Erreur lors de la suppression', 'error');
+        }
     }
 
     buildWorkoutDetailsContent(workout) {
@@ -1878,6 +2168,117 @@ class App {
             this.closeMetricsModal();
             this.loadProfile();
             this.showToast('Marqueurs physiologiques enregistrés!');
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde:', error);
+            this.showToast('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    async openUserInfoModal() {
+        const profile = await this.db.getProfile();
+
+        // Pre-fill existing data
+        if (profile.userInfo) {
+            if (profile.userInfo.name) document.getElementById('userNameInput').value = profile.userInfo.name;
+            if (profile.userInfo.age) document.getElementById('userAgeInput').value = profile.userInfo.age;
+            if (profile.userInfo.gender) document.getElementById('userGenderInput').value = profile.userInfo.gender;
+        }
+
+        document.getElementById('userInfoModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeUserInfoModal() {
+        document.getElementById('userInfoModal').classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('userInfoForm').reset();
+    }
+
+    async handleUserInfoFormSubmit() {
+        const name = document.getElementById('userNameInput').value.trim();
+        const age = parseInt(document.getElementById('userAgeInput').value);
+        const gender = document.getElementById('userGenderInput').value;
+
+        if (!name || !age || !gender) {
+            this.showToast('Veuillez remplir tous les champs', 'error');
+            return;
+        }
+
+        const profile = await this.db.getProfile();
+
+        const updatedProfile = {
+            ...profile,
+            userInfo: {
+                name,
+                age,
+                gender,
+                updatedAt: new Date().toISOString()
+            }
+        };
+
+        try {
+            await this.db.saveProfile(updatedProfile);
+            this.closeUserInfoModal();
+            this.loadProfile();
+            this.showToast('Informations enregistrées!', 'success');
+        } catch (error) {
+            console.error('Erreur lors de la sauvegarde:', error);
+            this.showToast('Erreur lors de la sauvegarde', 'error');
+        }
+    }
+
+    async openAnthropoModal() {
+        const profile = await this.db.getProfile();
+
+        // Pre-fill existing data
+        if (profile.anthropo) {
+            if (profile.anthropo.weight) document.getElementById('weightInput').value = profile.anthropo.weight;
+            if (profile.anthropo.height) document.getElementById('heightInput').value = profile.anthropo.height;
+            if (profile.anthropo.bodyFat) document.getElementById('bodyFatInput').value = profile.anthropo.bodyFat;
+        }
+
+        document.getElementById('anthropoModal').classList.add('active');
+        document.body.style.overflow = 'hidden';
+    }
+
+    closeAnthropoModal() {
+        document.getElementById('anthropoModal').classList.remove('active');
+        document.body.style.overflow = '';
+        document.getElementById('anthropoForm').reset();
+    }
+
+    async handleAnthropoFormSubmit() {
+        const weight = parseFloat(document.getElementById('weightInput').value);
+        const height = parseInt(document.getElementById('heightInput').value);
+        const bodyFat = parseFloat(document.getElementById('bodyFatInput').value) || null;
+
+        if (!weight || !height) {
+            this.showToast('Veuillez remplir le poids et la taille', 'error');
+            return;
+        }
+
+        // Calculate BMI
+        const heightInMeters = height / 100;
+        const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
+
+        const profile = await this.db.getProfile();
+
+        const updatedProfile = {
+            ...profile,
+            anthropo: {
+                weight,
+                height,
+                bodyFat,
+                bmi: parseFloat(bmi),
+                updatedAt: new Date().toISOString()
+            }
+        };
+
+        try {
+            await this.db.saveProfile(updatedProfile);
+            this.closeAnthropoModal();
+            this.loadProfile();
+            this.showToast('Données anthropométriques enregistrées!', 'success');
         } catch (error) {
             console.error('Erreur lors de la sauvegarde:', error);
             this.showToast('Erreur lors de la sauvegarde', 'error');

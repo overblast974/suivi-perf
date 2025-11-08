@@ -1413,6 +1413,124 @@ body {
     margin-top: 8px;
 }
 
+/* Goals */
+.goal-card {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid var(--primary);
+    position: relative;
+}
+
+.goal-card.completed {
+    border-left-color: var(--success);
+    opacity: 0.7;
+}
+
+.goal-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.goal-type-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.goal-type-badge.general {
+    background: rgba(100, 100, 100, 0.2);
+    color: var(--text-secondary);
+}
+
+.goal-type-badge.musculation {
+    background: rgba(59, 130, 246, 0.2);
+    color: #3b82f6;
+}
+
+.goal-type-badge.running {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.goal-description {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text);
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.goal-target {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.goal-deadline {
+    font-size: 12px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.goal-deadline.overdue {
+    color: var(--danger);
+}
+
+.goal-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.goal-action-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.goal-action-btn.complete {
+    background: var(--success);
+    color: white;
+}
+
+.goal-action-btn.delete {
+    background: var(--danger);
+    color: white;
+}
+
+.goal-action-btn:hover {
+    opacity: 0.8;
+    transform: translateY(-1px);
+}
+
+.goals-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.goals-empty svg {
+    width: 64px;
+    height: 64px;
+    color: var(--text-muted);
+    margin-bottom: 16px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
     .filters-row {
