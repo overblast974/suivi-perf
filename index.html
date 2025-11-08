@@ -295,6 +295,54 @@
                     </select>
                 </div>
 
+                <!-- ACWR and Alerts Section -->
+                <div id="acwrSection" class="section">
+                    <h3>Charge d'entraînement (ACWR)</h3>
+                    <div class="acwr-container">
+                        <div class="acwr-ratio">
+                            <span class="acwr-label">Ratio Aiguë/Chronique</span>
+                            <span class="acwr-value" id="acwrValue">-</span>
+                            <span class="acwr-status" id="acwrStatus"></span>
+                        </div>
+                        <div class="acwr-details">
+                            <div class="acwr-detail-item">
+                                <span class="label">Charge aiguë (7j)</span>
+                                <span class="value" id="acuteLoad">-</span>
+                            </div>
+                            <div class="acwr-detail-item">
+                                <span class="label">Charge chronique (28j)</span>
+                                <span class="value" id="chronicLoad">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="acwrWarning" class="alert-box" style="display: none;"></div>
+                </div>
+
+                <!-- Overtraining Alert Section -->
+                <div id="overtrainingSection" class="section" style="display: none;">
+                    <h3>⚠️ Alertes</h3>
+                    <div id="overtrainingAlert" class="alert-box"></div>
+                    <div id="recommendations" class="recommendations-list"></div>
+                </div>
+
+                <!-- Monotony and Strain Section -->
+                <div id="monotonySection" class="section" style="display: none;">
+                    <h3>Monotonie et Strain</h3>
+                    <div class="metrics-grid-two">
+                        <div class="metric-card">
+                            <h4>Monotonie</h4>
+                            <p class="metric-value" id="monotonyValue">-</p>
+                            <p class="metric-unit">Variété de charge</p>
+                        </div>
+                        <div class="metric-card">
+                            <h4>Strain</h4>
+                            <p class="metric-value" id="strainValue">-</p>
+                            <p class="metric-unit">Charge × Monotonie</p>
+                        </div>
+                    </div>
+                    <div id="monotonyWarning" class="alert-box" style="display: none;"></div>
+                </div>
+
                 <div class="section">
                     <h3>Fréquence d'entraînement</h3>
                     <div class="chart-container">
@@ -583,6 +631,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="exercises-database.js"></script>
+    <script src="calculations.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

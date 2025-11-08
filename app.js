@@ -703,6 +703,9 @@ class App {
             }
             if (workout.type === 'running' && workout.distance) {
                 details += `<span class="workout-detail">📍 ${workout.distance} km</span>`;
+                if (workout.elevation && workout.distanceEquivalent) {
+                    details += `<span class="workout-detail">⛰️ ${workout.distanceEquivalent.toFixed(1)} km éq.</span>`;
+                }
                 if (workout.pace) {
                     details += `<span class="workout-detail">⚡ ${workout.pace} min/km</span>`;
                 }
@@ -926,6 +929,15 @@ class App {
         const workouts = allWorkouts.filter(w => !w.status || w.status === 'completed');
         let filtered = type === 'all' ? workouts : workouts.filter(w => w.type === type);
 
+        // Calculate and display ACWR
+        this.displayACWR(workouts);
+
+        // Detect and display overtraining warnings
+        this.displayOvertrainingAlerts(workouts);
+
+        // Display monotony and strain
+        this.displayMonotonyStrain(workouts);
+
         // Filter by period
         const now = new Date();
         const days = period === 'week' ? 7 : period === 'month' ? 30 :
@@ -966,6 +978,94 @@ class App {
         } else {
             volumeSection.style.display = 'none';
             performanceSection.style.display = 'none';
+        }
+    }
+
+    displayACWR(workouts) {
+        if (typeof WorkoutCalculations === 'undefined') return;
+
+        const acwr = WorkoutCalculations.calculateACWR(workouts);
+
+        document.getElementById('acwrValue').textContent = acwr.ratio;
+        document.getElementById('acuteLoad').textContent = acwr.acuteLoad;
+        document.getElementById('chronicLoad').textContent = acwr.chronicLoad;
+
+        const statusEl = document.getElementById('acwrStatus');
+        statusEl.textContent = acwr.zone === 'safe' ? 'Zone sûre' :
+                               acwr.zone === 'moderate' ? 'Attention' :
+                               acwr.zone === 'high' ? 'Risque élevé' : 'Charge basse';
+        statusEl.className = `acwr-status ${acwr.zone}`;
+
+        const warningEl = document.getElementById('acwrWarning');
+        if (acwr.warning) {
+            warningEl.textContent = acwr.warning;
+            warningEl.className = 'alert-box ' + (acwr.zone === 'high' ? 'danger' : 'warning');
+            warningEl.style.display = 'block';
+        } else {
+            warningEl.style.display = 'none';
+        }
+    }
+
+    displayOvertrainingAlerts(workouts) {
+        if (typeof WorkoutCalculations === 'undefined') return;
+
+        const overtraining = WorkoutCalculations.detectOvertraining(workouts);
+
+        const sectionEl = document.getElementById('overtrainingSection');
+        const alertEl = document.getElementById('overtrainingAlert');
+        const recommendationsEl = document.getElementById('recommendations');
+
+        if (overtraining.risk === 'insufficient_data') {
+            sectionEl.style.display = 'none';
+            return;
+        }
+
+        if (overtraining.risk === 'low') {
+            sectionEl.style.display = 'none';
+            return;
+        }
+
+        sectionEl.style.display = 'block';
+
+        alertEl.textContent = overtraining.message;
+        alertEl.className = 'alert-box ' + (overtraining.risk === 'high' ? 'danger' : 'warning');
+
+        if (overtraining.recommendations && overtraining.recommendations.length > 0) {
+            recommendationsEl.innerHTML = `
+                <h4>Recommandations</h4>
+                <ul>
+                    ${overtraining.recommendations.map(r => `<li>${r}</li>`).join('')}
+                </ul>
+            `;
+        } else {
+            recommendationsEl.innerHTML = '';
+        }
+    }
+
+    displayMonotonyStrain(workouts) {
+        if (typeof WorkoutCalculations === 'undefined') return;
+
+        const ms = WorkoutCalculations.calculateMonotonyAndStrain(workouts);
+
+        const sectionEl = document.getElementById('monotonySection');
+        const warningEl = document.getElementById('monotonyWarning');
+
+        if (ms.monotony === null) {
+            sectionEl.style.display = 'none';
+            return;
+        }
+
+        sectionEl.style.display = 'block';
+
+        document.getElementById('monotonyValue').textContent = ms.monotony;
+        document.getElementById('strainValue').textContent = ms.strain;
+
+        if (ms.warning) {
+            warningEl.textContent = ms.warning;
+            warningEl.className = 'alert-box warning';
+            warningEl.style.display = 'block';
+        } else {
+            warningEl.style.display = 'none';
         }
     }
 
@@ -1325,12 +1425,31 @@ class App {
             workout.distance = parseFloat(document.getElementById('distance').value) || 0;
             workout.runTime = document.getElementById('runTime').value;
             workout.elevation = parseInt(document.getElementById('elevation').value) || 0;
-            workout.pace = document.getElementById('pace').value;
+
+            // Calculate pace if not provided
+            if (!document.getElementById('pace').value && workout.runTime && workout.distance) {
+                workout.pace = WorkoutCalculations.calculatePace(workout.runTime, workout.distance);
+            } else {
+                workout.pace = document.getElementById('pace').value;
+            }
+
+            // Calculate trail equivalent distance
+            if (workout.elevation > 0) {
+                workout.distanceEquivalent = WorkoutCalculations.calculateTrailEquivalent(
+                    workout.distance,
+                    workout.elevation
+                );
+            }
 
             const rpe = document.getElementById('rpeRun').value;
             const forme = document.getElementById('formeRun').value;
             workout.rpe = parseInt(rpe);
             workout.forme = parseInt(forme);
+        }
+
+        // Calculate TRIMP for all workouts
+        if (typeof WorkoutCalculations !== 'undefined') {
+            workout.trimp = WorkoutCalculations.calculateTRIMP(workout);
         }
 
         try {
