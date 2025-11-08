@@ -366,21 +366,47 @@ Strain = Charge_totale_semaine × Monotonie
 
 ---
 
-## ❓ QUESTIONS POUR VALIDATION
+## ✅ RÉPONSES VALIDÉES
 
-1. **Exercices musculation** : Liste pré-définie ou saisie libre ?
-2. **VMA** : L'utilisateur la renseigne dans le profil ?
-3. **FC (Fréquence cardiaque)** : Tracking prévu ou juste RPE ?
-4. **Objectifs** : Lier les objectifs aux séances planifiées ?
-5. **Alertes** : Notifier si ACWR en zone rouge ?
+1. **Exercices musculation** : **Liste exhaustive pré-définie**
+   - Base de données complète en français (prioritaire)
+   - Anglais pour exercices non traduits
+   - Autocomplete + recherche
+   - Fichier : `exercises-database.js` (200+ exercices)
+
+2. **VMA/VO2max** : **Calcul automatique + Saisie manuelle**
+   - Calculs automatiques d'approximation (allure, FC, distance)
+   - Priorité aux données utilisateur si renseignées
+   - Proposer protocoles de terrain (test navette, etc.)
+   - VO2max calculé depuis VMA
+
+3. **FC (Fréquence cardiaque)** : **Les deux (FC + RPE)**
+   - Tracking FC si disponible
+   - RPE toujours demandé
+   - Utiliser le plus précis ou moyenne
+   - Calculs TRIMP adaptés selon données
+
+4. **Objectifs** : **Système double**
+   - **Objectifs globaux** : Marathon, trail, 1RM, puissance max
+   - **Objectifs par séance** : Volume cible, allure cible
+   - Lien entre les deux
+   - Progression vers objectif global
+
+5. **Alertes** : **Oui avec recommandations**
+   - Alerte si ACWR > 1.5 (zone rouge)
+   - Détection surentraînement
+   - Détection fatigue cumulative
+   - **Recommandations** : "Ralentir", "Repos conseillé"
+   - Proposer séances de récupération
+
+6. **Trail** : **Prise en compte dénivelé**
+   - Dénivelé positif/négatif
+   - Calcul distance équivalente (100m D+ = ~1km)
+   - Graphiques spécifiques trail
 
 ---
 
-**Cette refonte représente environ :**
-- 500+ lignes de HTML à modifier
-- 300+ lignes de CSS à ajouter
-- 1000+ lignes de JavaScript à recoder
+**Début d'implémentation : Novembre 2025**
 
-**Temps estimé : 3-4 heures de développement**
-
-**Êtes-vous d'accord avec cette spécification avant que je commence ?**
+Base d'exercices créée : ✅
+Spécifications finalisées : ✅
