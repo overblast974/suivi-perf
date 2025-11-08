@@ -1,11 +1,19 @@
-const CACHE_NAME = 'suivi-perf-v1';
+const CACHE_NAME = 'trainsmart-v2';
 const urlsToCache = [
   '/',
   '/index.html',
+  '/auth.html',
   '/styles.css',
+  '/auth.css',
   '/app.js',
+  '/auth.js',
+  '/supabase-client.js',
+  '/supabase-db.js',
+  '/calculations.js',
+  '/exercises-database.js',
   '/manifest.json',
-  'https://cdn.jsdelivr.net/npm/chart.js'
+  'https://cdn.jsdelivr.net/npm/chart.js',
+  'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
 ];
 
 // Install service worker
