@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users_profile (
     name TEXT,
     age INTEGER,
     gender TEXT CHECK (gender IN ('male', 'female', 'other')),
+    role TEXT CHECK (role IN ('user', 'admin')) DEFAULT 'user',
 
     -- Anthropometric Data
     weight DECIMAL(5,1),

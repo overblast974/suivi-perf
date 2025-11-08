@@ -1702,10 +1702,25 @@ class App {
         const profile = await this.db.getProfile();
 
         // Update user name in header
+        const userNameEl = document.getElementById('userName');
         if (profile.userInfo && profile.userInfo.name) {
-            document.getElementById('userName').textContent = profile.userInfo.name;
+            userNameEl.textContent = profile.userInfo.name;
+
+            // Add admin badge if user is admin
+            if (profile.userInfo.role === 'admin') {
+                // Remove existing badge if any
+                const existingBadge = userNameEl.parentElement.querySelector('.admin-badge');
+                if (existingBadge) existingBadge.remove();
+
+                // Create admin badge
+                const adminBadge = document.createElement('span');
+                adminBadge.className = 'admin-badge';
+                adminBadge.textContent = 'Admin';
+                adminBadge.style.cssText = 'background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; margin-left: 8px; display: inline-block; vertical-align: middle;';
+                userNameEl.insertAdjacentElement('afterend', adminBadge);
+            }
         } else {
-            document.getElementById('userName').textContent = 'Athlète';
+            userNameEl.textContent = 'Athlète';
         }
 
         // Display profile data if available

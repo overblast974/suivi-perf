@@ -123,7 +123,8 @@ class SupabaseDatabase {
             userInfo: {
                 name: data.name,
                 age: data.age,
-                gender: data.gender
+                gender: data.gender,
+                role: data.role || 'user'
             },
             anthropo: {
                 weight: data.weight,
@@ -239,6 +240,17 @@ class SupabaseDatabase {
             .eq('user_id', this.currentUser.id);
 
         if (error) throw error;
+    }
+
+    // Role methods
+    async getUserRole() {
+        const profile = await this.getProfile();
+        return profile.userInfo?.role || 'user';
+    }
+
+    async isAdmin() {
+        const role = await this.getUserRole();
+        return role === 'admin';
     }
 
     // Auth helper

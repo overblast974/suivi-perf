@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer Compte Admin - TrainSmart</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #1f2937;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .info-box {
+            background: #f3f4f6;
+            border-left: 4px solid #667eea;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        .info-box h3 {
+            color: #374151;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+        .info-box p {
+            color: #6b7280;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .credentials {
+            background: #1f2937;
+            color: #f9fafb;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 20px 0;
+            display: none;
+        }
+        .credentials.show {
+            display: block;
+        }
+        .credentials div {
+            margin-bottom: 12px;
+        }
+        .credentials label {
+            color: #9ca3af;
+            font-size: 12px;
+            display: block;
+            margin-bottom: 4px;
+        }
+        .credentials .value {
+            color: #10b981;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-copy {
+            background: #10b981;
+            color: white;
+            margin-top: 12px;
+        }
+        .btn-copy:hover {
+            background: #059669;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 16px;
+            font-size: 14px;
+            display: none;
+        }
+        .status.show {
+            display: block;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #dc2626;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid #10b981;
+        }
+        .warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Créer Compte Admin</h1>
+        <p class="subtitle">TrainSmart - Administration</p>
+
+        <div class="warning">
+            ⚠️ <strong>Important:</strong> Ce script crée un compte administrateur avec tous les privilèges. Gardez ces identifiants en lieu sûr.
+        </div>
+
+        <div class="info-box">
+            <h3>📋 Informations</h3>
+            <p>
+                Ce script va créer un compte administrateur dans Supabase avec les identifiants suivants :
+            </p>
+        </div>
+
+        <div class="info-box">
+            <h3>🎯 Identifiants par défaut</h3>
+            <p>
+                <strong>Email:</strong> admin@trainsmart.app<br>
+                <strong>Mot de passe:</strong> Admin2024!TrainSmart<br>
+                <strong>Nom:</strong> Administrateur<br>
+                <strong>Âge:</strong> 35<br>
+                <strong>Sexe:</strong> Homme<br>
+                <strong>Rôle:</strong> admin
+            </p>
+        </div>
+
+        <button id="createBtn" class="btn btn-primary">
+            Créer le compte administrateur
+        </button>
+
+        <div id="status" class="status"></div>
+
+        <div id="credentials" class="credentials">
+            <div>
+                <label>Email:</label>
+                <div class="value" id="credEmail">-</div>
+            </div>
+            <div>
+                <label>Mot de passe:</label>
+                <div class="value" id="credPassword">-</div>
+            </div>
+            <div>
+                <label>Rôle:</label>
+                <div class="value" id="credRole">-</div>
+            </div>
+            <div>
+                <label>Statut:</label>
+                <div class="value" id="credStatus">-</div>
+            </div>
+            <button id="copyBtn" class="btn btn-copy">
+                📋 Copier les identifiants
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase-client.js"></script>
+    <script>
+        const ADMIN_CREDENTIALS = {
+            email: 'admin@trainsmart.app',
+            password: 'Admin2024!TrainSmart',
+            name: 'Administrateur',
+            age: 35,
+            gender: 'male',
+            role: 'admin'
+        };
+
+        const createBtn = document.getElementById('createBtn');
+        const statusDiv = document.getElementById('status');
+        const credentialsDiv = document.getElementById('credentials');
+        const copyBtn = document.getElementById('copyBtn');
+
+        function showStatus(message, type) {
+            statusDiv.textContent = message;
+            statusDiv.className = `status show ${type}`;
+        }
+
+        function showCredentials(creds) {
+            document.getElementById('credEmail').textContent = creds.email;
+            document.getElementById('credPassword').textContent = creds.password;
+            document.getElementById('credRole').textContent = creds.role;
+            document.getElementById('credStatus').textContent = '✅ Compte créé avec succès';
+            credentialsDiv.classList.add('show');
+        }
+
+        async function createAdminAccount() {
+            createBtn.disabled = true;
+            createBtn.textContent = 'Création en cours...';
+            showStatus('', '');
+            credentialsDiv.classList.remove('show');
+
+            try {
+                // Vérifier que Supabase est configuré
+                if (!window.supabaseClient) {
+                    throw new Error('Client Supabase non configuré');
+                }
+
+                const supabase = window.supabaseClient;
+
+                // 1. Créer le compte utilisateur dans Supabase Auth
+                showStatus('Création du compte utilisateur...', 'success');
+
+                const { data: authData, error: authError } = await supabase.auth.signUp({
+                    email: ADMIN_CREDENTIALS.email,
+                    password: ADMIN_CREDENTIALS.password,
+                    options: {
+                        data: {
+                            name: ADMIN_CREDENTIALS.name,
+                            age: ADMIN_CREDENTIALS.age,
+                            gender: ADMIN_CREDENTIALS.gender
+                        }
+                    }
+                });
+
+                if (authError) {
+                    // Si l'erreur est "User already registered", on essaie de se connecter
+                    if (authError.message.includes('already registered')) {
+                        showStatus('Compte déjà existant, connexion en cours...', 'success');
+
+                        const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
+                            email: ADMIN_CREDENTIALS.email,
+                            password: ADMIN_CREDENTIALS.password
+                        });
+
+                        if (loginError) {
+                            throw new Error(`Erreur de connexion: ${loginError.message}`);
+                        }
+
+                        // Vérifier si le profil existe
+                        const { data: existingProfile, error: profileError } = await supabase
+                            .from('users_profile')
+                            .select('*')
+                            .eq('user_id', loginData.user.id)
+                            .single();
+
+                        if (existingProfile && existingProfile.role === 'admin') {
+                            showStatus('✅ Compte administrateur déjà existant et configuré', 'success');
+                            showCredentials(ADMIN_CREDENTIALS);
+                            createBtn.textContent = 'Compte déjà existant';
+                            return;
+                        }
+
+                        // Mettre à jour le rôle à admin
+                        const { error: updateError } = await supabase
+                            .from('users_profile')
+                            .update({ role: 'admin' })
+                            .eq('user_id', loginData.user.id);
+
+                        if (updateError) {
+                            throw new Error(`Erreur mise à jour rôle: ${updateError.message}`);
+                        }
+
+                        showStatus('✅ Compte administrateur créé et configuré avec succès!', 'success');
+                        showCredentials(ADMIN_CREDENTIALS);
+                        createBtn.textContent = '✓ Compte créé';
+                        return;
+                    }
+                    throw new Error(`Erreur création compte: ${authError.message}`);
+                }
+
+                if (!authData.user) {
+                    throw new Error('Aucun utilisateur créé');
+                }
+
+                showStatus('Compte créé, configuration du profil...', 'success');
+
+                // 2. Créer le profil utilisateur avec rôle admin
+                const { error: profileError } = await supabase
+                    .from('users_profile')
+                    .insert({
+                        user_id: authData.user.id,
+                        name: ADMIN_CREDENTIALS.name,
+                        age: ADMIN_CREDENTIALS.age,
+                        gender: ADMIN_CREDENTIALS.gender,
+                        role: 'admin'
+                    });
+
+                if (profileError) {
+                    throw new Error(`Erreur création profil: ${profileError.message}`);
+                }
+
+                // 3. Déconnexion après création
+                await supabase.auth.signOut();
+
+                showStatus('✅ Compte administrateur créé avec succès!', 'success');
+                showCredentials(ADMIN_CREDENTIALS);
+                createBtn.textContent = '✓ Compte créé';
+
+            } catch (error) {
+                console.error('Erreur:', error);
+                showStatus(`❌ Erreur: ${error.message}`, 'error');
+                createBtn.disabled = false;
+                createBtn.textContent = 'Réessayer';
+            }
+        }
+
+        function copyCredentials() {
+            const text = `TrainSmart - Identifiants Administrateur
+========================================
+Email: ${ADMIN_CREDENTIALS.email}
+Mot de passe: ${ADMIN_CREDENTIALS.password}
+Rôle: ${ADMIN_CREDENTIALS.role}
+URL: ${window.location.origin}
+
+⚠️ Gardez ces identifiants en lieu sûr!`;
+
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✓ Copié!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            }).catch(err => {
+                alert('Erreur lors de la copie: ' + err.message);
+            });
+        }
+
+        createBtn.addEventListener('click', createAdminAccount);
+        copyBtn.addEventListener('click', copyCredentials);
+    </script>
+</body>
+</html>
