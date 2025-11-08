@@ -1698,6 +1698,83 @@ class App {
                 document.getElementById('metricsDisplay').textContent = metricsText.join(' • ');
             }
         }
+
+        // Display training zones
+        this.displayTrainingZones(profile);
+    }
+
+    displayTrainingZones(profile) {
+        const zonesSection = document.getElementById('trainingZonesSection');
+        const paceContainer = document.getElementById('paceZonesContainer');
+        const hrContainer = document.getElementById('hrZonesContainer');
+        const noZonesMessage = document.getElementById('noZonesMessage');
+
+        let hasZones = false;
+
+        // Calculate and display pace zones if VMA is available
+        if (profile.metrics && profile.metrics.vma && typeof WorkoutCalculations !== 'undefined') {
+            const paceZones = WorkoutCalculations.calculatePaceZones(profile.metrics.vma);
+
+            if (paceZones) {
+                hasZones = true;
+                paceContainer.style.display = 'block';
+                document.getElementById('vmaDisplay').textContent = `VMA: ${paceZones.vma} km/h (allure VMA: ${paceZones.vmaPace})`;
+
+                const paceZonesList = document.getElementById('paceZonesList');
+                paceZonesList.innerHTML = paceZones.zones.map(zone => `
+                    <div class="zone-card" style="border-left-color: ${zone.color};">
+                        <div class="zone-info">
+                            <h5>Zone ${zone.number} - ${zone.name}</h5>
+                            <p>${zone.description} (${zone.minPercent}-${zone.maxPercent}% VMA)</p>
+                        </div>
+                        <div class="zone-range">
+                            <span class="zone-number">${zone.number}</span>
+                            <span class="zone-values">${zone.minPace} - ${zone.maxPace}/km</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else {
+            paceContainer.style.display = 'none';
+        }
+
+        // Calculate and display HR zones if FC max is available
+        if (profile.metrics && profile.metrics.fcMax && typeof WorkoutCalculations !== 'undefined') {
+            const hrZones = WorkoutCalculations.calculateHeartRateZones(
+                profile.metrics.fcMax,
+                profile.metrics.fcRepos || null
+            );
+
+            if (hrZones) {
+                hasZones = true;
+                hrContainer.style.display = 'block';
+                document.getElementById('hrMethodDisplay').textContent = `(Méthode: ${hrZones.method})`;
+
+                const hrZonesList = document.getElementById('hrZonesList');
+                hrZonesList.innerHTML = hrZones.zones.map(zone => `
+                    <div class="zone-card" style="border-left-color: ${zone.color};">
+                        <div class="zone-info">
+                            <h5>Zone ${zone.number} - ${zone.name}</h5>
+                            <p>${zone.description}</p>
+                        </div>
+                        <div class="zone-range">
+                            <span class="zone-number">${zone.number}</span>
+                            <span class="zone-values">${zone.min} - ${zone.max} bpm</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } else {
+            hrContainer.style.display = 'none';
+        }
+
+        // Show or hide the section
+        if (hasZones) {
+            zonesSection.style.display = 'block';
+            noZonesMessage.style.display = 'none';
+        } else {
+            zonesSection.style.display = 'none';
+        }
     }
 
     openModal() {

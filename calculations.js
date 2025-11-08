@@ -294,6 +294,200 @@ class WorkoutCalculations {
             warning
         };
     }
+
+    /**
+     * Calculate heart rate training zones based on FC max
+     * @param {number} fcMax - Maximum heart rate in bpm
+     * @param {number} fcRepos - Resting heart rate in bpm (optional)
+     * @returns {Object} - Training zones with HR ranges
+     */
+    static calculateHeartRateZones(fcMax, fcRepos = null) {
+        if (!fcMax || fcMax < 120 || fcMax > 220) {
+            return null;
+        }
+
+        // Using Karvonen method if resting HR is available, otherwise % of max
+        const useKarvonen = fcRepos && fcRepos > 30 && fcRepos < 100;
+
+        const calculateHR = (percentage) => {
+            if (useKarvonen) {
+                // Karvonen: HR = ((HRmax − HRrest) × %Intensity) + HRrest
+                const reserve = fcMax - fcRepos;
+                return Math.round(reserve * percentage + fcRepos);
+            } else {
+                // Simple % of max
+                return Math.round(fcMax * percentage);
+            }
+        };
+
+        return {
+            method: useKarvonen ? 'Karvonen' : '% FCmax',
+            zones: [
+                {
+                    number: 1,
+                    name: 'Récupération',
+                    description: 'Récupération active, échauffement',
+                    min: calculateHR(0.50),
+                    max: calculateHR(0.60),
+                    color: '#10b981'
+                },
+                {
+                    number: 2,
+                    name: 'Endurance',
+                    description: 'Endurance fondamentale, base aérobie',
+                    min: calculateHR(0.60),
+                    max: calculateHR(0.70),
+                    color: '#3b82f6'
+                },
+                {
+                    number: 3,
+                    name: 'Tempo',
+                    description: 'Endurance active, tempo confortable',
+                    min: calculateHR(0.70),
+                    max: calculateHR(0.80),
+                    color: '#f59e0b'
+                },
+                {
+                    number: 4,
+                    name: 'Seuil',
+                    description: 'Seuil lactique, allure course',
+                    min: calculateHR(0.80),
+                    max: calculateHR(0.90),
+                    color: '#ef4444'
+                },
+                {
+                    number: 5,
+                    name: 'VO2max',
+                    description: 'Intensité maximale, efforts courts',
+                    min: calculateHR(0.90),
+                    max: fcMax,
+                    color: '#dc2626'
+                }
+            ]
+        };
+    }
+
+    /**
+     * Calculate pace training zones based on VMA
+     * @param {number} vma - VMA in km/h
+     * @returns {Object} - Training zones with pace ranges
+     */
+    static calculatePaceZones(vma) {
+        if (!vma || vma < 8 || vma > 25) {
+            return null;
+        }
+
+        // Convert VMA (km/h) to pace (min/km)
+        const vmaPace = 60 / vma; // minutes per km
+
+        const calculatePace = (percentage) => {
+            // At X% VMA, pace is slower (time increases)
+            const paceMinPerKm = vmaPace / percentage;
+            const minutes = Math.floor(paceMinPerKm);
+            const seconds = Math.round((paceMinPerKm - minutes) * 60);
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        };
+
+        return {
+            vma: vma.toFixed(1),
+            vmaPace: calculatePace(1.0),
+            zones: [
+                {
+                    number: 1,
+                    name: 'Récupération',
+                    description: 'Footing lent, récupération',
+                    minPercent: 60,
+                    maxPercent: 70,
+                    minPace: calculatePace(0.70),
+                    maxPace: calculatePace(0.60),
+                    color: '#10b981'
+                },
+                {
+                    number: 2,
+                    name: 'Endurance fondamentale',
+                    description: 'EF, sortie longue',
+                    minPercent: 70,
+                    maxPercent: 80,
+                    minPace: calculatePace(0.80),
+                    maxPace: calculatePace(0.70),
+                    color: '#3b82f6'
+                },
+                {
+                    number: 3,
+                    name: 'Endurance active',
+                    description: 'EA, tempo moyen',
+                    minPercent: 80,
+                    maxPercent: 85,
+                    minPace: calculatePace(0.85),
+                    maxPace: calculatePace(0.80),
+                    color: '#f59e0b'
+                },
+                {
+                    number: 4,
+                    name: 'Seuil anaérobie',
+                    description: 'Allure semi/marathon',
+                    minPercent: 85,
+                    maxPercent: 90,
+                    minPace: calculatePace(0.90),
+                    maxPace: calculatePace(0.85),
+                    color: '#ef4444'
+                },
+                {
+                    number: 5,
+                    name: 'VMA',
+                    description: 'Fractionné court, 30s-3min',
+                    minPercent: 95,
+                    maxPercent: 105,
+                    minPace: calculatePace(1.05),
+                    maxPace: calculatePace(0.95),
+                    color: '#dc2626'
+                }
+            ]
+        };
+    }
+
+    /**
+     * Determine which zone a workout falls into based on average heart rate or pace
+     * @param {number} value - HR in bpm or pace in min/km
+     * @param {Object} zones - Zones object from calculateHeartRateZones or calculatePaceZones
+     * @param {string} type - 'hr' or 'pace'
+     * @returns {number} - Zone number (1-5)
+     */
+    static determineZone(value, zones, type = 'hr') {
+        if (!zones || !value) return null;
+
+        if (type === 'hr') {
+            // For HR, find zone where value falls between min and max
+            for (const zone of zones.zones) {
+                if (value >= zone.min && value <= zone.max) {
+                    return zone.number;
+                }
+            }
+        } else if (type === 'pace') {
+            // For pace, convert string "M:SS" to decimal minutes
+            let paceMinutes;
+            if (typeof value === 'string') {
+                const [min, sec] = value.split(':').map(Number);
+                paceMinutes = min + sec / 60;
+            } else {
+                paceMinutes = value;
+            }
+
+            // Find zone (pace is inverse - slower pace = lower zone)
+            for (const zone of zones.zones) {
+                const [minMin, minSec] = zone.minPace.split(':').map(Number);
+                const [maxMin, maxSec] = zone.maxPace.split(':').map(Number);
+                const zoneMinPace = minMin + minSec / 60;
+                const zoneMaxPace = maxMin + maxSec / 60;
+
+                if (paceMinutes <= zoneMaxPace && paceMinutes >= zoneMinPace) {
+                    return zone.number;
+                }
+            }
+        }
+
+        return null;
+    }
 }
 
 // Make it available globally

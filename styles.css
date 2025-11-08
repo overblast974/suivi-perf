@@ -1495,6 +1495,55 @@ body {
     color: var(--text-secondary);
 }
 
+/* Training Zones */
+.zone-card {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.zone-card:hover {
+    transform: translateX(4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.zone-info h5 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 0 0 4px 0;
+    color: var(--text);
+}
+
+.zone-info p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.zone-range {
+    text-align: right;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.zone-range .zone-number {
+    display: block;
+    font-size: 24px;
+    color: var(--primary);
+    margin-bottom: 4px;
+}
+
+.zone-range .zone-values {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
 /* Goals */
 .goal-card {
     background: var(--bg-secondary);

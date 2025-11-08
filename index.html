@@ -484,6 +484,44 @@
                         <button class="btn-secondary" id="exportBtn">Exporter</button>
                     </div>
                 </div>
+
+                <!-- Training Zones Section -->
+                <div id="trainingZonesSection" style="display: none; margin-top: 24px;">
+                    <div class="section">
+                        <h3>
+                            Zones d'entraînement
+                            <span class="info-tooltip" data-tooltip="zones">
+                                ?
+                                <span class="info-tooltip-content">
+                                    <h5>Zones d'entraînement</h5>
+                                    <p>Les zones d'entraînement permettent de structurer vos séances selon l'intensité. Basées sur votre VMA ou FC max, elles vous aident à optimiser vos progrès et éviter le surmenage.</p>
+                                </span>
+                            </span>
+                        </h3>
+
+                        <!-- Pace Zones (VMA-based) -->
+                        <div id="paceZonesContainer" style="display: none; margin-bottom: 32px;">
+                            <h4 style="font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                                🏃 Zones d'allure (basées sur VMA)
+                                <span id="vmaDisplay" style="font-size: 14px; color: var(--text-secondary);"></span>
+                            </h4>
+                            <div id="paceZonesList"></div>
+                        </div>
+
+                        <!-- HR Zones (Heart Rate-based) -->
+                        <div id="hrZonesContainer" style="display: none;">
+                            <h4 style="font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                                ❤️ Zones cardiaques
+                                <span id="hrMethodDisplay" style="font-size: 14px; color: var(--text-secondary);"></span>
+                            </h4>
+                            <div id="hrZonesList"></div>
+                        </div>
+
+                        <div id="noZonesMessage" style="text-align: center; padding: 40px 20px; color: var(--text-secondary);">
+                            <p>Renseignez votre VMA ou FC max dans les marqueurs physiologiques pour afficher vos zones d'entraînement.</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </main>
 
