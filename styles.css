@@ -206,6 +206,28 @@ body {
     background: var(--bg-secondary);
 }
 
+.btn-danger {
+    background: #ef4444;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+}
+
+.btn-danger:hover {
+    background: #dc2626;
+}
+
+.btn-danger:active {
+    transform: scale(0.98);
+}
+
 .btn-icon {
     background: none;
     border: none;

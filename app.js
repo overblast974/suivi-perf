@@ -58,6 +58,7 @@ class App {
         // Modal controls
         document.getElementById('closeModalBtn').addEventListener('click', () => this.closeModal());
         document.getElementById('cancelBtn').addEventListener('click', () => this.closeModal());
+        document.getElementById('deleteWorkoutBtn').addEventListener('click', () => this.deleteCurrentWorkout());
 
         // Plan session modal controls
         document.getElementById('closePlanModalBtn').addEventListener('click', () => this.closePlanModal());
@@ -1768,6 +1769,12 @@ class App {
         document.getElementById('addWorkoutModal').classList.add('active');
         document.body.style.overflow = 'hidden';
 
+        // Hide delete button for new workouts
+        const deleteBtn = document.getElementById('deleteWorkoutBtn');
+        if (deleteBtn) {
+            deleteBtn.style.display = 'none';
+        }
+
         // Initialize fields to default state
         const workoutType = document.getElementById('workoutType');
         if (workoutType) {
@@ -1787,6 +1794,12 @@ class App {
         document.getElementById('workoutDate').value = workout.date;
         this.toggleConditionalFields(workout.type);
 
+        // Show delete button for planned sessions
+        const deleteBtn = document.getElementById('deleteWorkoutBtn');
+        if (deleteBtn) {
+            deleteBtn.style.display = 'flex';
+        }
+
         // Open modal
         document.getElementById('addWorkoutModal').classList.add('active');
         document.body.style.overflow = 'hidden';
@@ -1802,6 +1815,12 @@ class App {
         this.toggleConditionalFields('');
         this.setTodayDate();
         this.editingWorkoutId = null;
+
+        // Hide delete button
+        const deleteBtn = document.getElementById('deleteWorkoutBtn');
+        if (deleteBtn) {
+            deleteBtn.style.display = 'none';
+        }
 
         // Reset exercises
         this.currentExercises = [];
@@ -1832,6 +1851,43 @@ class App {
         document.getElementById('planSessionModal').classList.remove('active');
         document.body.style.overflow = '';
         document.getElementById('planSessionForm').reset();
+    }
+
+    async deleteCurrentWorkout() {
+        if (!this.editingWorkoutId) {
+            this.showToast('Aucune séance à supprimer', 'error');
+            return;
+        }
+
+        // Confirm deletion
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cette séance planifiée ?')) {
+            return;
+        }
+
+        try {
+            await this.db.deleteWorkout(this.editingWorkoutId);
+            this.showToast('Séance supprimée avec succès!');
+            this.closeModal();
+
+            // Refresh current view
+            switch(this.currentView) {
+                case 'dashboard':
+                    await this.loadDashboard();
+                    break;
+                case 'workouts':
+                    await this.loadWorkouts();
+                    break;
+                case 'program':
+                    await this.renderCalendar();
+                    break;
+                case 'stats':
+                    await this.loadStats();
+                    break;
+            }
+        } catch (error) {
+            console.error('Erreur lors de la suppression:', error);
+            this.showToast('Erreur lors de la suppression', 'error');
+        }
     }
 
     async openMetricsModal() {
@@ -2758,8 +2814,12 @@ class App {
         try {
             await this.db.addWorkout(plannedSession);
             this.showToast('Séance planifiée avec succès!');
-            await this.loadProgram(); // Wait for calendar to refresh
             this.closePlanModal();
+
+            // Force immediate calendar refresh
+            if (this.currentView === 'program') {
+                await this.renderCalendar();
+            }
         } catch (error) {
             console.error('Erreur lors de la planification:', error);
             this.showToast('Erreur lors de la planification', 'error');
