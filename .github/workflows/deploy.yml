@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - claude/create-pwa-app-011CUpVWxAL7ZEvcD2WUnZMb
+      - claude/deploy-fixes-011CUwBYttN6zPznDRBQ3LfY
       - main
   workflow_dispatch:
 
