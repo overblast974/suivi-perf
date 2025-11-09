@@ -331,26 +331,48 @@ class App {
             });
         }
 
-        // Auto-calculate pace for running
+        // Auto-calculate pace for running with new time inputs
         const distanceInput = document.getElementById('distance');
-        const runTimeInput = document.getElementById('runTime');
+        const runHoursInput = document.getElementById('runHours');
+        const runMinutesInput = document.getElementById('runMinutes');
+        const runSecondsInput = document.getElementById('runSeconds');
+        const runTimeHidden = document.getElementById('runTime');
         const paceInput = document.getElementById('pace');
 
-        const calculatePaceAuto = () => {
+        const updateRunTimeAndPace = () => {
+            const hours = parseInt(runHoursInput.value) || 0;
+            const minutes = parseInt(runMinutesInput.value) || 0;
+            const seconds = parseInt(runSecondsInput.value) || 0;
             const distance = parseFloat(distanceInput.value);
-            const runTime = runTimeInput.value;
 
-            if (distance && runTime && typeof WorkoutCalculations !== 'undefined') {
-                const pace = WorkoutCalculations.calculatePace(runTime, distance);
+            // Build runTime string (HH:MM:SS or MM:SS)
+            let runTimeStr = '';
+            if (hours > 0) {
+                runTimeStr = `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            } else if (minutes > 0 || seconds > 0) {
+                runTimeStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            runTimeHidden.value = runTimeStr;
+
+            // Calculate pace if we have distance and time
+            if (distance && runTimeStr && typeof WorkoutCalculations !== 'undefined') {
+                const pace = WorkoutCalculations.calculatePace(runTimeStr, distance);
                 if (pace) {
                     paceInput.value = pace;
+                } else {
+                    paceInput.value = '';
                 }
+            } else {
+                paceInput.value = '';
             }
         };
 
-        if (distanceInput && runTimeInput && paceInput) {
-            distanceInput.addEventListener('input', calculatePaceAuto);
-            runTimeInput.addEventListener('input', calculatePaceAuto);
+        if (distanceInput && runHoursInput && runMinutesInput && runSecondsInput && paceInput) {
+            distanceInput.addEventListener('input', updateRunTimeAndPace);
+            runHoursInput.addEventListener('input', updateRunTimeAndPace);
+            runMinutesInput.addEventListener('input', updateRunTimeAndPace);
+            runSecondsInput.addEventListener('input', updateRunTimeAndPace);
         }
     }
 
@@ -2483,10 +2505,16 @@ class App {
         });
 
         // Hide/show duration field based on type
-        const durationGroup = document.querySelector('[for="workoutDuration"]')?.closest('.form-group');
-        if (durationGroup) {
+        const durationField = document.getElementById('durationField');
+        if (durationField) {
             // Hide duration for running (use runTime instead)
-            durationGroup.style.display = type === 'running' ? 'none' : 'block';
+            durationField.style.display = type === 'running' ? 'none' : 'block';
+        }
+
+        // Show/hide running subtype field
+        const runningSubtypeField = document.getElementById('runningSubtypeField');
+        if (runningSubtypeField) {
+            runningSubtypeField.style.display = type === 'running' ? 'block' : 'none';
         }
 
         if (type) {
@@ -2529,6 +2557,10 @@ class App {
             workout.rpe = parseInt(rpe);
             workout.forme = parseInt(forme);
         } else if (type === 'running') {
+            // Get running subtype
+            const runningSubtype = document.getElementById('runningSubtype').value;
+            workout.running_subtype = runningSubtype;
+
             workout.distance = parseFloat(document.getElementById('distance').value) || 0;
             const runTime = document.getElementById('runTime').value;
             workout.elevation = parseInt(document.getElementById('elevation').value) || 0;

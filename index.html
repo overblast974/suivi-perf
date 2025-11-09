@@ -562,12 +562,21 @@
                         </select>
                     </div>
 
+                    <!-- Running subtype -->
+                    <div class="form-group" id="runningSubtypeField" style="display: none;">
+                        <label>Type de séance</label>
+                        <select id="runningSubtype" class="select-input">
+                            <option value="endurance">Endurance continue</option>
+                            <option value="interval">Entraînement par intervalles</option>
+                        </select>
+                    </div>
+
                     <div class="form-group">
                         <label>Date</label>
                         <input type="date" id="workoutDate" class="input" required>
                     </div>
 
-                    <div class="form-group">
+                    <div class="form-group" id="durationField">
                         <label>Durée (minutes)</label>
                         <input type="number" id="workoutDuration" class="input" min="1" required>
                     </div>
@@ -658,7 +667,14 @@
                         </div>
                         <div class="form-group">
                             <label>Temps</label>
-                            <input type="text" id="runTime" class="input" placeholder="HH:MM:SS">
+                            <div style="display: flex; gap: 8px; align-items: center;">
+                                <input type="number" id="runHours" class="input" min="0" max="23" placeholder="H" style="width: 70px;">
+                                <span style="font-size: 18px; font-weight: bold;">:</span>
+                                <input type="number" id="runMinutes" class="input" min="0" max="59" placeholder="M" style="width: 70px;" required>
+                                <span style="font-size: 18px; font-weight: bold;">:</span>
+                                <input type="number" id="runSeconds" class="input" min="0" max="59" placeholder="S" style="width: 70px;">
+                            </div>
+                            <input type="hidden" id="runTime">
                         </div>
                         <div class="form-group">
                             <label>Dénivelé (m)</label>
@@ -666,7 +682,7 @@
                         </div>
                         <div class="form-group">
                             <label>Allure moyenne (min/km) <small style="color: #10b981;">(calculée automatiquement)</small></label>
-                            <input type="text" id="pace" class="input" placeholder="Automatique" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
+                            <input type="text" id="pace" class="input" placeholder="Automatique" readonly style="background-color: #e5e7eb; color: #1f2937; font-weight: 600; cursor: not-allowed; border: 2px solid #10b981;">
                         </div>
 
                         <div class="form-group">
