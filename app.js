@@ -330,6 +330,28 @@ class App {
                 await this.handleMetricsFormSubmit();
             });
         }
+
+        // Auto-calculate pace for running
+        const distanceInput = document.getElementById('distance');
+        const runTimeInput = document.getElementById('runTime');
+        const paceInput = document.getElementById('pace');
+
+        const calculatePaceAuto = () => {
+            const distance = parseFloat(distanceInput.value);
+            const runTime = runTimeInput.value;
+
+            if (distance && runTime && typeof WorkoutCalculations !== 'undefined') {
+                const pace = WorkoutCalculations.calculatePace(runTime, distance);
+                if (pace) {
+                    paceInput.value = pace;
+                }
+            }
+        };
+
+        if (distanceInput && runTimeInput && paceInput) {
+            distanceInput.addEventListener('input', calculatePaceAuto);
+            runTimeInput.addEventListener('input', calculatePaceAuto);
+        }
     }
 
     setTodayDate() {
@@ -708,13 +730,13 @@ class App {
         } else {
             // Completed session - show details
             details = `<span class="workout-detail">⏱️ ${workout.duration} min</span>`;
-            if (workout.type === 'musculation' && workout.totalVolume) {
-                details += `<span class="workout-detail">💪 ${workout.totalVolume.toFixed(0)} kg</span>`;
+            if (workout.type === 'musculation' && workout.total_volume) {
+                details += `<span class="workout-detail">💪 ${workout.total_volume.toFixed(0)} kg</span>`;
             }
             if (workout.type === 'running' && workout.distance) {
                 details += `<span class="workout-detail">📍 ${workout.distance} km</span>`;
-                if (workout.elevation && workout.distanceEquivalent) {
-                    details += `<span class="workout-detail">⛰️ ${workout.distanceEquivalent.toFixed(1)} km éq.</span>`;
+                if (workout.elevation && workout.distance_equivalent) {
+                    details += `<span class="workout-detail">⛰️ ${workout.distance_equivalent.toFixed(1)} km éq.</span>`;
                 }
                 if (workout.pace) {
                     details += `<span class="workout-detail">⚡ ${workout.pace} min/km</span>`;
@@ -1165,7 +1187,7 @@ class App {
         let data, label;
 
         if (type === 'musculation') {
-            const grouped = this.groupDataByPeriod(workouts, aggregation, 'totalVolume');
+            const grouped = this.groupDataByPeriod(workouts, aggregation, 'total_volume');
             data = grouped.data;
             label = 'Volume (kg)';
         } else if (type === 'running') {
@@ -1179,7 +1201,7 @@ class App {
         }
 
         const grouped = this.groupDataByPeriod(workouts, aggregation,
-            type === 'musculation' ? 'totalVolume' : type === 'running' ? 'distance' : null);
+            type === 'musculation' ? 'total_volume' : type === 'running' ? 'distance' : null);
 
         this.charts.volume = new Chart(ctx, {
             type: 'line',
@@ -2052,11 +2074,11 @@ class App {
                 <h4>Détails Musculation</h4>
         `;
 
-        if (workout.totalVolume) {
+        if (workout.total_volume) {
             html += `
                 <div class="workout-detail-item" style="margin-top: 12px;">
                     <div style="color: var(--text-secondary); font-size: 12px;">Volume total</div>
-                    <div style="font-size: 20px; font-weight: 600; margin-top: 4px;">💪 ${workout.totalVolume.toFixed(0)} kg</div>
+                    <div style="font-size: 20px; font-weight: 600; margin-top: 4px;">💪 ${workout.total_volume.toFixed(0)} kg</div>
                 </div>
             `;
         }
@@ -2126,11 +2148,11 @@ class App {
             `;
         }
 
-        if (workout.distanceEquivalent) {
+        if (workout.distance_equivalent) {
             html += `
                 <div class="workout-detail-item">
                     <div style="color: var(--text-secondary); font-size: 12px;">Distance équivalente</div>
-                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">🏃 ${workout.distanceEquivalent.toFixed(1)} km</div>
+                    <div style="font-size: 18px; font-weight: 600; margin-top: 4px;">🏃 ${workout.distance_equivalent.toFixed(1)} km</div>
                 </div>
             `;
         }
@@ -2460,6 +2482,13 @@ class App {
             field.style.display = 'none';
         });
 
+        // Hide/show duration field based on type
+        const durationGroup = document.querySelector('[for="workoutDuration"]')?.closest('.form-group');
+        if (durationGroup) {
+            // Hide duration for running (use runTime instead)
+            durationGroup.style.display = type === 'running' ? 'none' : 'block';
+        }
+
         if (type) {
             const field = document.getElementById(`${type}Fields`);
             if (field) {
@@ -2472,16 +2501,13 @@ class App {
     async handleFormSubmit() {
         const type = document.getElementById('workoutType').value;
         const date = document.getElementById('workoutDate').value;
-        const duration = document.getElementById('workoutDuration').value;
         const notes = document.getElementById('notes').value;
 
         const workout = {
             type,
             date,
-            duration: parseInt(duration),
             notes,
-            status: 'completed',
-            completedAt: new Date().toISOString()
+            status: 'completed'
         };
 
         // Add type-specific fields
@@ -2491,8 +2517,12 @@ class App {
                 return;
             }
 
-            workout.exercisesDetailed = this.currentExercises;
-            workout.totalVolume = this.currentExercises.reduce((sum, ex) => sum + ex.volume, 0);
+            // Fix field names for Supabase schema
+            workout.exercises = this.currentExercises;
+            workout.total_volume = this.currentExercises.reduce((sum, ex) => sum + ex.volume, 0);
+
+            const duration = document.getElementById('workoutDuration').value;
+            workout.duration = parseInt(duration);
 
             const rpe = document.getElementById('rpeMuscu').value;
             const forme = document.getElementById('formeMuscu').value;
@@ -2500,19 +2530,31 @@ class App {
             workout.forme = parseInt(forme);
         } else if (type === 'running') {
             workout.distance = parseFloat(document.getElementById('distance').value) || 0;
-            workout.runTime = document.getElementById('runTime').value;
+            const runTime = document.getElementById('runTime').value;
             workout.elevation = parseInt(document.getElementById('elevation').value) || 0;
 
-            // Calculate pace if not provided
-            if (!document.getElementById('pace').value && workout.runTime && workout.distance) {
-                workout.pace = WorkoutCalculations.calculatePace(workout.runTime, workout.distance);
-            } else {
-                workout.pace = document.getElementById('pace').value;
+            // Convert runTime (HH:MM:SS) to minutes for duration field
+            if (runTime) {
+                const parts = runTime.split(':');
+                let totalMinutes = 0;
+                if (parts.length === 3) {
+                    // HH:MM:SS
+                    totalMinutes = parseInt(parts[0]) * 60 + parseInt(parts[1]) + Math.round(parseInt(parts[2]) / 60);
+                } else if (parts.length === 2) {
+                    // MM:SS
+                    totalMinutes = parseInt(parts[0]) + Math.round(parseInt(parts[1]) / 60);
+                }
+                workout.duration = totalMinutes;
             }
 
-            // Calculate trail equivalent distance
+            // Calculate pace automatically from runTime and distance
+            if (runTime && workout.distance) {
+                workout.pace = WorkoutCalculations.calculatePace(runTime, workout.distance);
+            }
+
+            // Calculate trail equivalent distance (fix field name for Supabase)
             if (workout.elevation > 0) {
-                workout.distanceEquivalent = WorkoutCalculations.calculateTrailEquivalent(
+                workout.distance_equivalent = WorkoutCalculations.calculateTrailEquivalent(
                     workout.distance,
                     workout.elevation
                 );
@@ -2642,8 +2684,8 @@ class App {
                 musculationWorkouts: completedWorkouts.filter(w => w.type === 'musculation').length,
                 runningWorkouts: completedWorkouts.filter(w => w.type === 'running').length,
                 totalVolume: completedWorkouts
-                    .filter(w => w.type === 'musculation' && w.totalVolume)
-                    .reduce((sum, w) => sum + w.totalVolume, 0),
+                    .filter(w => w.type === 'musculation' && w.total_volume)
+                    .reduce((sum, w) => sum + w.total_volume, 0),
                 totalDistance: completedWorkouts
                     .filter(w => w.type === 'running' && w.distance)
                     .reduce((sum, w) => sum + w.distance, 0),
