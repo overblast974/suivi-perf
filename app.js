@@ -2747,8 +2747,8 @@ class App {
             type,
             date,
             status: 'planned',
-            note,
-            plannedAt: new Date().toISOString()
+            notes: note,  // Fix: Use 'notes' (plural) to match DB schema
+            planned_at: new Date().toISOString()  // Fix: Use snake_case for Supabase
         };
 
         try {
