@@ -81,19 +81,12 @@ class App {
             this.toggleConditionalFields(e.target.value);
         });
 
-        // Running subtype change (attach after DOM load)
-        setTimeout(() => {
-            const runningSubtypeSelect = document.getElementById('runningSubtype');
-            if (runningSubtypeSelect) {
-                console.log('Running subtype select found, attaching listener');
-                runningSubtypeSelect.addEventListener('change', (e) => {
-                    console.log('Running subtype changed to:', e.target.value);
-                    this.toggleRunningSubtype();
-                });
-            } else {
-                console.error('Running subtype select NOT found');
+        // Running subtype change - use event delegation since element is in modal
+        document.addEventListener('change', (e) => {
+            if (e.target && e.target.id === 'runningSubtype') {
+                this.toggleRunningSubtype();
             }
-        }, 100);
+        });
 
 
         // Type filter tabs
