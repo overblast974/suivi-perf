@@ -914,15 +914,19 @@ class App {
         container.querySelectorAll('.workout-card.completed').forEach(card => {
             card.addEventListener('click', async (e) => {
                 const workoutId = e.currentTarget.dataset.workoutId;  // Fix: UUIDs are strings, not integers
+                console.log('Séance cliquée, ID:', workoutId); // Debug
                 if (workoutId) {
+                    console.log('Ouverture détails pour:', workoutId); // Debug
                     await this.openWorkoutDetailsModal(workoutId);
+                } else {
+                    console.error('Pas d\'ID trouvé sur la carte'); // Debug
                 }
             });
         });
     }
 
     async loadProgram() {
-        this.renderCalendar();
+        await this.renderCalendar();
     }
 
     async renderCalendar() {
@@ -2715,23 +2719,23 @@ class App {
                 this.showToast('Entraînement ajouté avec succès!');
             }
 
-            this.closeModal();
-
-            // Reload current view
+            // Reload current view BEFORE closing modal to ensure refresh
             switch(this.currentView) {
                 case 'dashboard':
-                    this.loadDashboard();
+                    await this.loadDashboard();
                     break;
                 case 'workouts':
-                    this.loadWorkouts();
+                    await this.loadWorkouts();
                     break;
                 case 'program':
-                    this.loadProgram();
+                    await this.loadProgram();
                     break;
                 case 'stats':
-                    this.loadStats();
+                    await this.loadStats();
                     break;
             }
+
+            this.closeModal();
         } catch (error) {
             console.error('Erreur lors de l\'opération:', error);
             this.showToast('Erreur lors de l\'opération', 'error');
