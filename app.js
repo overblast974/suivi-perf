@@ -81,6 +81,14 @@ class App {
             this.toggleConditionalFields(e.target.value);
         });
 
+        // Running subtype change
+        const runningSubtypeSelect = document.getElementById('runningSubtype');
+        if (runningSubtypeSelect) {
+            runningSubtypeSelect.addEventListener('change', () => {
+                this.toggleRunningSubtype();
+            });
+        }
+
         // Type filter tabs
         document.querySelectorAll('.tab[data-type]').forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -373,6 +381,35 @@ class App {
             runHoursInput.addEventListener('input', updateRunTimeAndPace);
             runMinutesInput.addEventListener('input', updateRunTimeAndPace);
             runSecondsInput.addEventListener('input', updateRunTimeAndPace);
+        }
+
+        // Auto-calculate interval pace
+        const intervalDistanceInput = document.getElementById('intervalDistance');
+        const intervalEffortMinInput = document.getElementById('intervalEffortMin');
+        const intervalEffortSecInput = document.getElementById('intervalEffortSec');
+        const intervalPaceInput = document.getElementById('intervalPace');
+
+        const updateIntervalPace = () => {
+            const distanceMeters = parseInt(intervalDistanceInput.value) || 0;
+            const minutes = parseInt(intervalEffortMinInput.value) || 0;
+            const seconds = parseInt(intervalEffortSecInput.value) || 0;
+
+            if (distanceMeters > 0 && (minutes > 0 || seconds > 0)) {
+                const totalSeconds = minutes * 60 + seconds;
+                const distanceKm = distanceMeters / 1000;
+                const paceSecondsPerKm = totalSeconds / distanceKm;
+                const paceMin = Math.floor(paceSecondsPerKm / 60);
+                const paceSec = Math.floor(paceSecondsPerKm % 60);
+                intervalPaceInput.value = `${paceMin}:${paceSec.toString().padStart(2, '0')}`;
+            } else {
+                intervalPaceInput.value = '';
+            }
+        };
+
+        if (intervalDistanceInput && intervalEffortMinInput && intervalEffortSecInput && intervalPaceInput) {
+            intervalDistanceInput.addEventListener('input', updateIntervalPace);
+            intervalEffortMinInput.addEventListener('input', updateIntervalPace);
+            intervalEffortSecInput.addEventListener('input', updateIntervalPace);
         }
     }
 
@@ -2524,6 +2561,27 @@ class App {
                 field.style.display = 'block';
             }
         }
+
+        // If running type, also toggle endurance/interval fields
+        if (type === 'running') {
+            this.toggleRunningSubtype();
+        }
+    }
+
+    toggleRunningSubtype() {
+        const subtype = document.getElementById('runningSubtype')?.value || 'endurance';
+        const enduranceFields = document.getElementById('runningEnduranceFields');
+        const intervalFields = document.getElementById('runningIntervalFields');
+
+        if (enduranceFields && intervalFields) {
+            if (subtype === 'endurance') {
+                enduranceFields.style.display = 'block';
+                intervalFields.style.display = 'none';
+            } else {
+                enduranceFields.style.display = 'none';
+                intervalFields.style.display = 'block';
+            }
+        }
     }
 
     async handleFormSubmit() {
@@ -2561,35 +2619,68 @@ class App {
             const runningSubtype = document.getElementById('runningSubtype').value;
             workout.running_subtype = runningSubtype;
 
-            workout.distance = parseFloat(document.getElementById('distance').value) || 0;
-            const runTime = document.getElementById('runTime').value;
-            workout.elevation = parseInt(document.getElementById('elevation').value) || 0;
+            if (runningSubtype === 'endurance') {
+                // Endurance workout data
+                workout.distance = parseFloat(document.getElementById('distance').value) || 0;
+                const runTime = document.getElementById('runTime').value;
+                workout.elevation = parseInt(document.getElementById('elevation').value) || 0;
 
-            // Convert runTime (HH:MM:SS) to minutes for duration field
-            if (runTime) {
-                const parts = runTime.split(':');
-                let totalMinutes = 0;
-                if (parts.length === 3) {
-                    // HH:MM:SS
-                    totalMinutes = parseInt(parts[0]) * 60 + parseInt(parts[1]) + Math.round(parseInt(parts[2]) / 60);
-                } else if (parts.length === 2) {
-                    // MM:SS
-                    totalMinutes = parseInt(parts[0]) + Math.round(parseInt(parts[1]) / 60);
+                // Convert runTime (HH:MM:SS) to minutes for duration field
+                if (runTime) {
+                    const parts = runTime.split(':');
+                    let totalMinutes = 0;
+                    if (parts.length === 3) {
+                        // HH:MM:SS
+                        totalMinutes = parseInt(parts[0]) * 60 + parseInt(parts[1]) + Math.round(parseInt(parts[2]) / 60);
+                    } else if (parts.length === 2) {
+                        // MM:SS
+                        totalMinutes = parseInt(parts[0]) + Math.round(parseInt(parts[1]) / 60);
+                    }
+                    workout.duration = totalMinutes;
                 }
-                workout.duration = totalMinutes;
-            }
 
-            // Calculate pace automatically from runTime and distance
-            if (runTime && workout.distance) {
-                workout.pace = WorkoutCalculations.calculatePace(runTime, workout.distance);
-            }
+                // Calculate pace automatically from runTime and distance
+                if (runTime && workout.distance) {
+                    workout.pace = WorkoutCalculations.calculatePace(runTime, workout.distance);
+                }
 
-            // Calculate trail equivalent distance (fix field name for Supabase)
-            if (workout.elevation > 0) {
-                workout.distance_equivalent = WorkoutCalculations.calculateTrailEquivalent(
-                    workout.distance,
-                    workout.elevation
-                );
+                // Calculate trail equivalent distance (fix field name for Supabase)
+                if (workout.elevation > 0) {
+                    workout.distance_equivalent = WorkoutCalculations.calculateTrailEquivalent(
+                        workout.distance,
+                        workout.elevation
+                    );
+                }
+            } else {
+                // Interval workout data
+                const intervalData = {
+                    type: document.getElementById('intervalType').value,
+                    reps: parseInt(document.getElementById('intervalReps').value) || 0,
+                    distance: parseInt(document.getElementById('intervalDistance').value) || 0,
+                    effortMin: parseInt(document.getElementById('intervalEffortMin').value) || 0,
+                    effortSec: parseInt(document.getElementById('intervalEffortSec').value) || 0,
+                    recoveryMin: parseInt(document.getElementById('intervalRecoveryMin').value) || 0,
+                    recoverySec: parseInt(document.getElementById('intervalRecoverySec').value) || 0,
+                    recoveryType: document.getElementById('intervalRecoveryType').value,
+                    warmup: parseInt(document.getElementById('intervalWarmup').value) || 0,
+                    cooldown: parseInt(document.getElementById('intervalCooldown').value) || 0,
+                    pace: document.getElementById('intervalPace').value
+                };
+
+                // Store as JSONB in exercises field (we'll use this for intervals too)
+                workout.exercises = intervalData;
+
+                // Calculate total distance
+                workout.distance = (intervalData.distance * intervalData.reps / 1000).toFixed(2);
+
+                // Calculate total duration
+                const totalEffortSec = (intervalData.effortMin * 60 + intervalData.effortSec) * intervalData.reps;
+                const totalRecoverySec = (intervalData.recoveryMin * 60 + intervalData.recoverySec) * (intervalData.reps - 1);
+                const totalSec = totalEffortSec + totalRecoverySec + (intervalData.warmup * 60) + (intervalData.cooldown * 60);
+                workout.duration = Math.round(totalSec / 60);
+
+                // Use interval pace
+                workout.pace = intervalData.pace;
             }
 
             const rpe = document.getElementById('rpeRun').value;

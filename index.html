@@ -661,30 +661,91 @@
 
                     <!-- Running specific fields -->
                     <div id="runningFields" class="conditional-fields" style="display: none;">
-                        <div class="form-group">
-                            <label>Distance (km)</label>
-                            <input type="number" id="distance" class="input" step="0.1" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Temps</label>
-                            <div style="display: flex; gap: 8px; align-items: center;">
-                                <input type="number" id="runHours" class="input" min="0" max="23" placeholder="H" style="width: 70px;">
-                                <span style="font-size: 18px; font-weight: bold;">:</span>
-                                <input type="number" id="runMinutes" class="input" min="0" max="59" placeholder="M" style="width: 70px;" required>
-                                <span style="font-size: 18px; font-weight: bold;">:</span>
-                                <input type="number" id="runSeconds" class="input" min="0" max="59" placeholder="S" style="width: 70px;">
+                        <!-- Endurance fields -->
+                        <div id="runningEnduranceFields" style="display: none;">
+                            <div class="form-group">
+                                <label>Distance (km)</label>
+                                <input type="number" id="distance" class="input" step="0.1" min="0">
                             </div>
-                            <input type="hidden" id="runTime">
-                        </div>
-                        <div class="form-group">
-                            <label>Dénivelé (m)</label>
-                            <input type="number" id="elevation" class="input" min="0">
-                        </div>
-                        <div class="form-group">
-                            <label>Allure moyenne (min/km) <small style="color: #10b981;">(calculée automatiquement)</small></label>
-                            <input type="text" id="pace" class="input" placeholder="Automatique" readonly style="background-color: #e5e7eb; color: #1f2937; font-weight: 600; cursor: not-allowed; border: 2px solid #10b981;">
+                            <div class="form-group">
+                                <label>Temps</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="number" id="runHours" class="input" min="0" max="23" placeholder="H" style="width: 70px;">
+                                    <span style="font-size: 18px; font-weight: bold;">:</span>
+                                    <input type="number" id="runMinutes" class="input" min="0" max="59" placeholder="M" style="width: 70px;" required>
+                                    <span style="font-size: 18px; font-weight: bold;">:</span>
+                                    <input type="number" id="runSeconds" class="input" min="0" max="59" placeholder="S" style="width: 70px;">
+                                </div>
+                                <input type="hidden" id="runTime">
+                            </div>
+                            <div class="form-group">
+                                <label>Dénivelé (m)</label>
+                                <input type="number" id="elevation" class="input" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Allure moyenne (min/km) <small style="color: #10b981;">(calculée automatiquement)</small></label>
+                                <input type="text" id="pace" class="input" placeholder="Automatique" readonly style="background-color: #e5e7eb; color: #1f2937; font-weight: 600; cursor: not-allowed; border: 2px solid #10b981;">
+                            </div>
                         </div>
 
+                        <!-- Interval fields -->
+                        <div id="runningIntervalFields" style="display: none;">
+                            <div class="form-group">
+                                <label>Type d'intervalle</label>
+                                <input type="text" id="intervalType" class="input" placeholder="Ex: 10 x 400m">
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label>Répétitions</label>
+                                    <input type="number" id="intervalReps" class="input" min="1" placeholder="10">
+                                </div>
+                                <div class="form-group">
+                                    <label>Distance/répétition (m)</label>
+                                    <input type="number" id="intervalDistance" class="input" min="0" step="50" placeholder="400">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Temps d'effort par répétition</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="number" id="intervalEffortMin" class="input" min="0" max="59" placeholder="M" style="width: 80px;">
+                                    <span style="font-size: 18px; font-weight: bold;">:</span>
+                                    <input type="number" id="intervalEffortSec" class="input" min="0" max="59" placeholder="S" style="width: 80px;">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Récupération entre répétitions</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="number" id="intervalRecoveryMin" class="input" min="0" max="59" placeholder="M" style="width: 80px;">
+                                    <span style="font-size: 18px; font-weight: bold;">:</span>
+                                    <input type="number" id="intervalRecoverySec" class="input" min="0" max="59" placeholder="S" style="width: 80px;">
+                                    <select id="intervalRecoveryType" class="select-input" style="flex: 1;">
+                                        <option value="active">Active (trot)</option>
+                                        <option value="passive">Passive (arrêt)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                <div class="form-group">
+                                    <label>Échauffement (min)</label>
+                                    <input type="number" id="intervalWarmup" class="input" min="0" placeholder="15">
+                                </div>
+                                <div class="form-group">
+                                    <label>Retour au calme (min)</label>
+                                    <input type="number" id="intervalCooldown" class="input" min="0" placeholder="10">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Allure moyenne des intervalles (min/km) <small style="color: #10b981;">(calculée automatiquement)</small></label>
+                                <input type="text" id="intervalPace" class="input" placeholder="Automatique" readonly style="background-color: #e5e7eb; color: #1f2937; font-weight: 600; cursor: not-allowed; border: 2px solid #10b981;">
+                            </div>
+                        </div>
+
+                        <!-- Common RPE/Forme fields for both types -->
                         <div class="form-group">
                             <label>
                                 RPE (1-10) <span id="rpeValueRun">5</span>
