@@ -81,13 +81,20 @@ class App {
             this.toggleConditionalFields(e.target.value);
         });
 
-        // Running subtype change
-        const runningSubtypeSelect = document.getElementById('runningSubtype');
-        if (runningSubtypeSelect) {
-            runningSubtypeSelect.addEventListener('change', () => {
-                this.toggleRunningSubtype();
-            });
-        }
+        // Running subtype change (attach after DOM load)
+        setTimeout(() => {
+            const runningSubtypeSelect = document.getElementById('runningSubtype');
+            if (runningSubtypeSelect) {
+                console.log('Running subtype select found, attaching listener');
+                runningSubtypeSelect.addEventListener('change', (e) => {
+                    console.log('Running subtype changed to:', e.target.value);
+                    this.toggleRunningSubtype();
+                });
+            } else {
+                console.error('Running subtype select NOT found');
+            }
+        }, 100);
+
 
         // Type filter tabs
         document.querySelectorAll('.tab[data-type]').forEach(tab => {
@@ -1763,6 +1770,13 @@ class App {
         this.editingWorkoutId = null;
         document.getElementById('addWorkoutModal').classList.add('active');
         document.body.style.overflow = 'hidden';
+
+        // Initialize fields to default state
+        const workoutType = document.getElementById('workoutType');
+        if (workoutType) {
+            workoutType.value = '';
+            this.toggleConditionalFields('');
+        }
     }
 
     async openValidationModal(workoutId) {
@@ -2574,13 +2588,16 @@ class App {
         const intervalFields = document.getElementById('runningIntervalFields');
 
         if (enduranceFields && intervalFields) {
+            console.log('Toggling running subtype to:', subtype); // Debug
             if (subtype === 'endurance') {
                 enduranceFields.style.display = 'block';
                 intervalFields.style.display = 'none';
-            } else {
+            } else if (subtype === 'interval') {
                 enduranceFields.style.display = 'none';
                 intervalFields.style.display = 'block';
             }
+        } else {
+            console.error('Could not find endurance or interval fields'); // Debug
         }
     }
 
