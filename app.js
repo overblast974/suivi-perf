@@ -903,7 +903,7 @@ class App {
         // Add click handlers for planned workout cards
         container.querySelectorAll('.workout-card.planned').forEach(card => {
             card.addEventListener('click', async (e) => {
-                const workoutId = parseInt(e.currentTarget.dataset.workoutId);
+                const workoutId = e.currentTarget.dataset.workoutId;  // Fix: UUIDs are strings, not integers
                 if (workoutId) {
                     await this.openValidationModal(workoutId);
                 }
@@ -913,7 +913,7 @@ class App {
         // Add click handlers for completed workout cards
         container.querySelectorAll('.workout-card.completed').forEach(card => {
             card.addEventListener('click', async (e) => {
-                const workoutId = parseInt(e.currentTarget.dataset.workoutId);
+                const workoutId = e.currentTarget.dataset.workoutId;  // Fix: UUIDs are strings, not integers
                 if (workoutId) {
                     await this.openWorkoutDetailsModal(workoutId);
                 }
@@ -2753,9 +2753,9 @@ class App {
 
         try {
             await this.db.addWorkout(plannedSession);
-            this.closePlanModal();
-            this.loadProgram();
             this.showToast('Séance planifiée avec succès!');
+            await this.loadProgram(); // Wait for calendar to refresh
+            this.closePlanModal();
         } catch (error) {
             console.error('Erreur lors de la planification:', error);
             this.showToast('Erreur lors de la planification', 'error');
