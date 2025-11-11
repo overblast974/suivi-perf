@@ -2813,13 +2813,14 @@ class App {
 
         try {
             await this.db.addWorkout(plannedSession);
-            this.showToast('Séance planifiée avec succès!');
-            this.closePlanModal();
 
-            // Force immediate calendar refresh
+            // Force immediate calendar refresh BEFORE closing modal
             if (this.currentView === 'program') {
                 await this.renderCalendar();
             }
+
+            this.closePlanModal();
+            this.showToast('Séance planifiée avec succès!');
         } catch (error) {
             console.error('Erreur lors de la planification:', error);
             this.showToast('Erreur lors de la planification', 'error');
