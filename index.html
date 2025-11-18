@@ -577,8 +577,9 @@
                     </div>
 
                     <div class="form-group" id="durationField">
-                        <label>Durée (minutes)</label>
+                        <label>Durée totale (minutes)</label>
                         <input type="number" id="workoutDuration" class="input" min="1" required>
+                        <small style="color: var(--text-muted); font-size: 12px;">Durée complète de la séance (échauffement, exercices, retour au calme)</small>
                     </div>
 
                     <!-- Musculation specific fields -->
@@ -678,7 +679,12 @@
                         </div>
                         <div class="form-group">
                             <label>Dénivelé (m)</label>
-                            <input type="number" id="elevation" class="input" min="0">
+                            <input type="number" id="elevation" class="input" min="0" placeholder="Ex: 250">
+                        </div>
+                        <div class="form-group">
+                            <label>Fréquence cardiaque moyenne (bpm)</label>
+                            <input type="number" id="heartRate" class="input" min="40" max="220" placeholder="Ex: 155">
+                            <small style="color: var(--text-muted); font-size: 12px;">Optionnel - Utilisé pour déterminer votre zone d'entraînement</small>
                         </div>
                         <div class="form-group">
                             <label>Allure moyenne (min/km) <small style="color: #10b981;">(calculée automatiquement)</small></label>
@@ -1035,6 +1041,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="constants.js"></script>
     <script src="supabase-client.js"></script>
     <script src="supabase-db.js"></script>
     <script src="exercises-database.js"></script>

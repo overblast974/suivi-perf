@@ -678,26 +678,31 @@ class App {
     }
 
     async loadDashboard() {
-        const workouts = await this.db.getAllWorkouts();
-        // Filter only completed workouts (treat undefined status as completed for backward compatibility)
-        const completedWorkouts = workouts.filter(w => !w.status || w.status === 'completed');
+        try {
+            const workouts = await this.db.getAllWorkouts();
+            // Filter only completed workouts (treat undefined status as completed for backward compatibility)
+            const completedWorkouts = workouts.filter(w => !w.status || w.status === 'completed');
 
-        // Update stats cards
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
+            // Update stats cards
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
 
-        const thisMonthWorkouts = completedWorkouts.filter(w => {
-            const date = new Date(w.date);
-            return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-        });
+            const thisMonthWorkouts = completedWorkouts.filter(w => {
+                const date = new Date(w.date);
+                return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+            });
 
-        document.getElementById('musculationCount').textContent =
-            thisMonthWorkouts.filter(w => w.type === 'musculation').length;
-        document.getElementById('runningCount').textContent =
-            thisMonthWorkouts.filter(w => w.type === 'running').length;
+            document.getElementById('musculationCount').textContent =
+                thisMonthWorkouts.filter(w => w.type === 'musculation').length;
+            document.getElementById('runningCount').textContent =
+                thisMonthWorkouts.filter(w => w.type === 'running').length;
 
-        // Load recent workouts
-        this.displayRecentWorkouts(completedWorkouts);
+            // Load recent workouts
+            this.displayRecentWorkouts(completedWorkouts);
+        } catch (error) {
+            console.error('Erreur lors du chargement du tableau de bord:', error);
+            this.showToast('Erreur lors du chargement des données', 'error');
+        }
     }
 
     displayRecentWorkouts(workouts) {
@@ -795,8 +800,13 @@ class App {
     }
 
     async loadWorkouts() {
-        const workouts = await this.db.getAllWorkouts();
-        this.displayWorkouts(workouts, 'all', 'all');
+        try {
+            const workouts = await this.db.getAllWorkouts();
+            this.displayWorkouts(workouts, 'all', 'all');
+        } catch (error) {
+            console.error('Erreur lors du chargement des séances:', error);
+            this.showToast('Erreur lors du chargement des séances', 'error');
+        }
     }
 
     async filterWorkouts(type, status = null) {
@@ -1992,6 +2002,11 @@ class App {
     }
 
     async deleteGoal(goalId) {
+        // Confirmation before deletion
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cet objectif ?')) {
+            return;
+        }
+
         try {
             await this.db.deleteGoal(goalId);
             await this.loadGoals();
@@ -2531,6 +2546,18 @@ class App {
         const date = document.getElementById('workoutDate').value;
         const notes = document.getElementById('notes').value;
 
+        // Validation: type is required
+        if (!type) {
+            this.showToast('Veuillez sélectionner un type d\'entraînement', 'error');
+            return;
+        }
+
+        // Validation: date is required
+        if (!date) {
+            this.showToast('Veuillez sélectionner une date', 'error');
+            return;
+        }
+
         const workout = {
             type,
             date,
@@ -2543,6 +2570,24 @@ class App {
             if (this.currentExercises.length === 0) {
                 this.showToast('Veuillez ajouter au moins un exercice', 'error');
                 return;
+            }
+
+            // Validation: check that all exercises have valid data
+            for (const exercise of this.currentExercises) {
+                if (!exercise.name || exercise.name.trim() === '') {
+                    this.showToast('Tous les exercices doivent avoir un nom', 'error');
+                    return;
+                }
+                if (!exercise.sets || exercise.sets.length === 0) {
+                    this.showToast(`L'exercice "${exercise.name}" doit avoir au moins une série`, 'error');
+                    return;
+                }
+                for (const set of exercise.sets) {
+                    if (set.reps <= 0 || set.weight < 0) {
+                        this.showToast(`Données invalides pour l'exercice "${exercise.name}"`, 'error');
+                        return;
+                    }
+                }
             }
 
             // Fix field names for Supabase schema
@@ -2561,9 +2606,28 @@ class App {
             const runningSubtype = document.getElementById('runningSubtype').value;
             workout.running_subtype = runningSubtype;
 
-            workout.distance = parseFloat(document.getElementById('distance').value) || 0;
             const runTime = document.getElementById('runTime').value;
+
+            // Validation: runTime is required for running
+            if (!runTime) {
+                this.showToast('Veuillez saisir le temps de course', 'error');
+                return;
+            }
+
+            workout.distance = parseFloat(document.getElementById('distance').value) || 0;
             workout.elevation = parseInt(document.getElementById('elevation').value) || 0;
+
+            // Validation: distance should be positive if provided
+            if (workout.distance < 0) {
+                this.showToast('La distance ne peut pas être négative', 'error');
+                return;
+            }
+
+            // Validation: elevation should be non-negative
+            if (workout.elevation < 0) {
+                this.showToast('Le dénivelé ne peut pas être négatif', 'error');
+                return;
+            }
 
             // Convert runTime (HH:MM:SS) to minutes for duration field
             if (runTime) {
@@ -2594,8 +2658,32 @@ class App {
 
             const rpe = document.getElementById('rpeRun').value;
             const forme = document.getElementById('formeRun').value;
+            const heartRate = document.getElementById('heartRate').value;
+
             workout.rpe = parseInt(rpe);
             workout.forme = parseInt(forme);
+
+            // Add heart rate if provided
+            if (heartRate) {
+                workout.heart_rate = parseInt(heartRate);
+
+                // Validation: heart rate should be reasonable
+                if (workout.heart_rate < 40 || workout.heart_rate > 220) {
+                    this.showToast('La fréquence cardiaque doit être entre 40 et 220 bpm', 'error');
+                    return;
+                }
+            }
+        }
+
+        // Validation: RPE and Forme should be between 1 and 10
+        if (workout.rpe < 1 || workout.rpe > 10) {
+            this.showToast('Le RPE doit être entre 1 et 10', 'error');
+            return;
+        }
+
+        if (workout.forme < 1 || workout.forme > 10) {
+            this.showToast('La forme du jour doit être entre 1 et 10', 'error');
+            return;
         }
 
         // Calculate TRIMP for all workouts
