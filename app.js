@@ -288,7 +288,7 @@ class App {
                         this.exportData();
                         break;
                     case 'import':
-                        this.showToast('Fonctionnalité en développement');
+                        this.importData();
                         break;
                     case 'settings':
                         this.switchView('profile');
@@ -2840,6 +2840,99 @@ class App {
 
         URL.revokeObjectURL(url);
         this.showToast('Rapport complet exporté avec succès!');
+    }
+
+    /**
+     * Import workout data from JSON file
+     */
+    importData() {
+        // Create hidden file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json,.json';
+
+        input.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+
+                // Validate data structure
+                if (!data.workouts || !Array.isArray(data.workouts)) {
+                    this.showToast('Format de fichier invalide - clé "workouts" manquante', 'error');
+                    return;
+                }
+
+                // Confirm import
+                const confirmMessage = `Importer ${data.workouts.length} séance(s) ?\n\nAttention : Cette action va ajouter ces séances à votre base de données.`;
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+
+                // Import workouts
+                let importedCount = 0;
+                let errorCount = 0;
+                const errors = [];
+
+                for (const workout of data.workouts) {
+                    try {
+                        // Validate required fields
+                        if (!workout.type || !workout.date) {
+                            errorCount++;
+                            errors.push(`Séance invalide (type ou date manquant)`);
+                            continue;
+                        }
+
+                        // Remove ID to create new workout
+                        const { id, user_id, created_at, updated_at, planned_at, ...workoutData } = workout;
+
+                        // Set status to completed if not specified
+                        if (!workoutData.status) {
+                            workoutData.status = 'completed';
+                        }
+
+                        // Import the workout
+                        await this.db.addWorkout(workoutData);
+                        importedCount++;
+                    } catch (error) {
+                        errorCount++;
+                        errors.push(`Erreur: ${error.message}`);
+                    }
+                }
+
+                // Show result
+                if (importedCount > 0) {
+                    this.showToast(`${importedCount} séance(s) importée(s) avec succès!`, 'success');
+
+                    // Reload current view to show new data
+                    switch(this.currentView) {
+                        case 'dashboard':
+                            this.loadDashboard();
+                            break;
+                        case 'workouts':
+                            this.loadWorkouts();
+                            break;
+                        case 'program':
+                            this.loadProgram();
+                            break;
+                    }
+                }
+
+                if (errorCount > 0) {
+                    console.error('Import errors:', errors);
+                    this.showToast(`${errorCount} erreur(s) lors de l'import - Voir console`, 'error');
+                }
+
+            } catch (error) {
+                console.error('Import error:', error);
+                this.showToast('Erreur lors de la lecture du fichier', 'error');
+            }
+        });
+
+        // Trigger file selection
+        input.click();
     }
 }
 
