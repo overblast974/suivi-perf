@@ -677,6 +677,39 @@
                             </div>
                             <input type="hidden" id="runTime">
                         </div>
+
+                        <!-- Interval Training specific fields -->
+                        <div id="intervalFields" style="display: none;">
+                            <div class="form-group">
+                                <label>Nombre de répétitions</label>
+                                <input type="number" id="intervalReps" class="input" min="1" max="50" placeholder="Ex: 8">
+                                <small style="color: var(--text-muted); font-size: 12px;">Nombre d'intervalles à haute intensité</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Durée par intervalle (MM:SS)</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="number" id="intervalMinutes" class="input" min="0" max="59" placeholder="M" style="width: 70px;">
+                                    <span style="font-size: 18px; font-weight: bold;">:</span>
+                                    <input type="number" id="intervalSeconds" class="input" min="0" max="59" placeholder="S" style="width: 70px;">
+                                </div>
+                                <small style="color: var(--text-muted); font-size: 12px;">Durée de chaque intervalle intensif</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Distance par intervalle (m)</label>
+                                <input type="number" id="intervalDistance" class="input" min="0" step="50" placeholder="Ex: 400">
+                                <small style="color: var(--text-muted); font-size: 12px;">Optionnel - Distance si intervalles mesurés en mètres</small>
+                            </div>
+                            <div class="form-group">
+                                <label>Récupération (MM:SS)</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <input type="number" id="recoveryMinutes" class="input" min="0" max="59" placeholder="M" style="width: 70px;">
+                                    <span style="font-size: 18px; font-weight: bold;">:</span>
+                                    <input type="number" id="recoverySeconds" class="input" min="0" max="59" placeholder="S" style="width: 70px;">
+                                </div>
+                                <small style="color: var(--text-muted); font-size: 12px;">Durée de récupération entre intervalles</small>
+                            </div>
+                        </div>
+
                         <div class="form-group">
                             <label>Dénivelé (m)</label>
                             <input type="number" id="elevation" class="input" min="0" placeholder="Ex: 250">

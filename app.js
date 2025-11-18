@@ -81,6 +81,14 @@ class App {
             this.toggleConditionalFields(e.target.value);
         });
 
+        // Running subtype change - show/hide interval fields
+        const runningSubtypeSelect = document.getElementById('runningSubtype');
+        if (runningSubtypeSelect) {
+            runningSubtypeSelect.addEventListener('change', (e) => {
+                this.toggleIntervalFields(e.target.value);
+            });
+        }
+
         // Type filter tabs
         document.querySelectorAll('.tab[data-type]').forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -1161,19 +1169,50 @@ class App {
         }
     }
 
+    /**
+     * Update or create a chart - optimized version
+     * @param {string} chartName - Name of the chart in this.charts
+     * @param {HTMLCanvasElement} canvas - Canvas element
+     * @param {Object} config - Chart.js configuration
+     */
+    updateOrCreateChart(chartName, canvas, config) {
+        if (!canvas) return;
+
+        const existingChart = this.charts[chartName];
+
+        if (existingChart && existingChart.data) {
+            // Chart exists, update data
+            existingChart.data.labels = config.data.labels;
+            existingChart.data.datasets.forEach((dataset, i) => {
+                if (config.data.datasets[i]) {
+                    dataset.data = config.data.datasets[i].data;
+                    // Update other dataset properties if needed
+                    if (config.data.datasets[i].label) {
+                        dataset.label = config.data.datasets[i].label;
+                    }
+                    if (config.data.datasets[i].backgroundColor) {
+                        dataset.backgroundColor = config.data.datasets[i].backgroundColor;
+                    }
+                    if (config.data.datasets[i].borderColor) {
+                        dataset.borderColor = config.data.datasets[i].borderColor;
+                    }
+                }
+            });
+            existingChart.update('none'); // 'none' skips animations for better performance
+        } else {
+            // Chart doesn't exist, create it
+            const ctx = canvas.getContext('2d');
+            this.charts[chartName] = new Chart(ctx, config);
+        }
+    }
+
     updateFrequencyChart(workouts, aggregation) {
         const canvas = document.getElementById('frequencyChart');
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.frequency) {
-            this.charts.frequency.destroy();
-        }
-
         const grouped = this.groupWorkoutsByPeriod(workouts, aggregation);
 
-        this.charts.frequency = new Chart(ctx, {
+        const config = {
             type: 'bar',
             data: {
                 labels: grouped.labels,
@@ -1203,39 +1242,30 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('frequency', canvas, config);
     }
 
     updateVolumeChart(workouts, type, aggregation) {
         const canvas = document.getElementById('volumeChart');
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.volume) {
-            this.charts.volume.destroy();
-        }
-
-        let data, label;
+        let label;
+        let grouped;
 
         if (type === 'musculation') {
-            const grouped = this.groupDataByPeriod(workouts, aggregation, 'total_volume');
-            data = grouped.data;
+            grouped = this.groupDataByPeriod(workouts, aggregation, 'total_volume');
             label = 'Volume (kg)';
         } else if (type === 'running') {
-            const grouped = this.groupDataByPeriod(workouts, aggregation, 'distance');
-            data = grouped.data;
+            grouped = this.groupDataByPeriod(workouts, aggregation, 'distance');
             label = 'Distance (km)';
         } else {
-            const grouped = this.groupWorkoutsByPeriod(workouts, aggregation);
-            data = grouped.data;
+            grouped = this.groupWorkoutsByPeriod(workouts, aggregation);
             label = 'Séances';
         }
 
-        const grouped = this.groupDataByPeriod(workouts, aggregation,
-            type === 'musculation' ? 'total_volume' : type === 'running' ? 'distance' : null);
-
-        this.charts.volume = new Chart(ctx, {
+        const config = {
             type: 'line',
             data: {
                 labels: grouped.labels,
@@ -1266,24 +1296,20 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('volume', canvas, config);
     }
 
     updatePerformanceChart(workouts, type) {
         const canvas = document.getElementById('performanceChart');
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.performance) {
-            this.charts.performance.destroy();
-        }
-
         // This is a placeholder - real implementation would track specific metrics
         const labels = workouts.map(w => new Date(w.date).toLocaleDateString('fr-FR'));
         const data = workouts.map((w, i) => Math.random() * 100); // Placeholder data
 
-        this.charts.performance = new Chart(ctx, {
+        const config = {
             type: 'line',
             data: {
                 labels: labels,
@@ -1313,18 +1339,14 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('performance', canvas, config);
     }
 
     updateACWRTrendChart(workouts) {
         const canvas = document.getElementById('acwrTrendChart');
         if (!canvas || typeof WorkoutCalculations === 'undefined') return;
-
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.acwrTrend) {
-            this.charts.acwrTrend.destroy();
-        }
 
         // Calculate ACWR for each week over the last 12 weeks
         const now = new Date();
@@ -1345,7 +1367,7 @@ class App {
             safeZoneMax.push(1.3);
         }
 
-        this.charts.acwrTrend = new Chart(ctx, {
+        const config = {
             type: 'line',
             data: {
                 labels: weeks,
@@ -1407,18 +1429,14 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('acwrTrend', canvas, config);
     }
 
     updateRPETrendChart(workouts) {
         const canvas = document.getElementById('rpeTrendChart');
         if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.rpeTrend) {
-            this.charts.rpeTrend.destroy();
-        }
 
         // Get last 30 workouts with RPE and Forme data
         const workoutsWithData = workouts
@@ -1438,7 +1456,7 @@ class App {
         const rpeData = workoutsWithData.map(w => w.rpe);
         const formeData = workoutsWithData.map(w => w.forme);
 
-        this.charts.rpeTrend = new Chart(ctx, {
+        const config = {
             type: 'line',
             data: {
                 labels: labels,
@@ -1495,7 +1513,9 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('rpeTrend', canvas, config);
     }
 
     groupWorkoutsByPeriod(workouts, period) {
@@ -2538,6 +2558,25 @@ class App {
                 field.classList.add('active');
                 field.style.display = 'block';
             }
+
+            // For running, check subtype to show interval fields
+            if (type === 'running') {
+                const runningSubtype = document.getElementById('runningSubtype');
+                if (runningSubtype) {
+                    this.toggleIntervalFields(runningSubtype.value);
+                }
+            }
+        }
+    }
+
+    /**
+     * Toggle interval training fields visibility
+     * @param {string} subtype - Running subtype (endurance or interval)
+     */
+    toggleIntervalFields(subtype) {
+        const intervalFields = document.getElementById('intervalFields');
+        if (intervalFields) {
+            intervalFields.style.display = subtype === 'interval' ? 'block' : 'none';
         }
     }
 
@@ -2605,6 +2644,36 @@ class App {
             // Get running subtype
             const runningSubtype = document.getElementById('runningSubtype').value;
             workout.running_subtype = runningSubtype;
+
+            // Capture interval data if interval training
+            if (runningSubtype === 'interval') {
+                const intervalReps = parseInt(document.getElementById('intervalReps').value) || 0;
+                const intervalMinutes = parseInt(document.getElementById('intervalMinutes').value) || 0;
+                const intervalSeconds = parseInt(document.getElementById('intervalSeconds').value) || 0;
+                const intervalDistance = parseInt(document.getElementById('intervalDistance').value) || 0;
+                const recoveryMinutes = parseInt(document.getElementById('recoveryMinutes').value) || 0;
+                const recoverySeconds = parseInt(document.getElementById('recoverySeconds').value) || 0;
+
+                // Build interval time string
+                let intervalTime = null;
+                if (intervalMinutes > 0 || intervalSeconds > 0) {
+                    intervalTime = `${intervalMinutes}:${intervalSeconds.toString().padStart(2, '0')}`;
+                }
+
+                // Build recovery time string
+                let recoveryTime = null;
+                if (recoveryMinutes > 0 || recoverySeconds > 0) {
+                    recoveryTime = `${recoveryMinutes}:${recoverySeconds.toString().padStart(2, '0')}`;
+                }
+
+                // Store interval data as JSONB
+                workout.interval_data = {
+                    reps: intervalReps,
+                    interval_time: intervalTime,
+                    interval_distance: intervalDistance,
+                    recovery_time: recoveryTime
+                };
+            }
 
             const runTime = document.getElementById('runTime').value;
 
