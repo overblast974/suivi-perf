@@ -80,27 +80,48 @@ class WorkoutCalculations {
             ratio = acuteLoad / chronicLoad;
         }
 
+        // Get thresholds from constants
+        const thresholds = window.CONSTANTS?.ACWR_THRESHOLDS || {
+            LOW: 0.8,
+            SAFE_MIN: 0.8,
+            SAFE_MAX: 1.3,
+            MODERATE: 1.3,
+            MODERATE_MAX: 1.5,
+            HIGH: 1.5
+        };
+        const colors = window.CONSTANTS?.ACWR_COLORS || {
+            LOW: '#f59e0b',
+            SAFE: '#10b981',
+            MODERATE: '#f59e0b',
+            HIGH: '#ef4444'
+        };
+        const messages = window.CONSTANTS?.MESSAGES?.WARNINGS || {
+            ACWR_LOW: 'Charge très basse - Risque de déconditionnement',
+            ACWR_MODERATE: 'Charge élevée - Attention au surmenage',
+            ACWR_HIGH: 'ALERTE: Risque élevé de blessure - Réduire la charge'
+        };
+
         // Determine zone
         let zone = 'safe';
-        let zoneColor = '#10b981'; // green
+        let zoneColor = colors.SAFE;
         let warning = null;
 
-        if (ratio < 0.8 && acuteLoad > 0) {
+        if (ratio < thresholds.LOW && acuteLoad > 0) {
             zone = 'low';
-            zoneColor = '#f59e0b'; // yellow
-            warning = 'Charge très basse - Risque de déconditionnement';
-        } else if (ratio >= 0.8 && ratio <= 1.3) {
+            zoneColor = colors.LOW;
+            warning = messages.ACWR_LOW;
+        } else if (ratio >= thresholds.SAFE_MIN && ratio <= thresholds.SAFE_MAX) {
             zone = 'safe';
-            zoneColor = '#10b981'; // green
+            zoneColor = colors.SAFE;
             warning = null;
-        } else if (ratio > 1.3 && ratio <= 1.5) {
+        } else if (ratio > thresholds.MODERATE && ratio <= thresholds.MODERATE_MAX) {
             zone = 'moderate';
-            zoneColor = '#f59e0b'; // yellow/orange
-            warning = 'Charge élevée - Attention au surmenage';
-        } else if (ratio > 1.5) {
+            zoneColor = colors.MODERATE;
+            warning = messages.ACWR_MODERATE;
+        } else if (ratio > thresholds.HIGH) {
             zone = 'high';
-            zoneColor = '#ef4444'; // red
-            warning = 'ALERTE: Risque élevé de blessure - Réduire la charge';
+            zoneColor = colors.HIGH;
+            warning = messages.ACWR_HIGH;
         }
 
         return {
@@ -215,17 +236,27 @@ class WorkoutCalculations {
         // Check ACWR
         const acwr = this.calculateACWR(workouts);
 
+        // Get thresholds from constants
+        const formThresholds = window.CONSTANTS?.FORM_THRESHOLDS || {
+            LOW: 4,
+            DECLINE_WARNING: 2
+        };
+        const messages = window.CONSTANTS?.MESSAGES?.WARNINGS || {
+            FORM_LOW: 'Forme générale basse',
+            FORM_DECLINING: 'Baisse de forme détectée'
+        };
+
         let risk = 'low';
         let message = 'Pas de signe de surmenage';
         let recommendations = [];
 
-        if (avgForme < 4) {
+        if (avgForme < formThresholds.LOW) {
             risk = 'high';
-            message = 'Forme générale basse';
+            message = messages.FORM_LOW;
             recommendations.push('Envisager une semaine de récupération');
-        } else if (decline > 2) {
+        } else if (decline > formThresholds.DECLINE_WARNING) {
             risk = 'moderate';
-            message = 'Baisse de forme détectée';
+            message = messages.FORM_DECLINING;
             recommendations.push('Réduire l\'intensité cette semaine');
         }
 
@@ -278,12 +309,22 @@ class WorkoutCalculations {
         // Calculate strain
         const strain = totalLoad * monotony;
 
+        // Get thresholds from constants
+        const thresholds = window.CONSTANTS?.MONOTONY_THRESHOLDS || {
+            HIGH: 2.0,
+            VERY_HIGH_STRAIN: 10000
+        };
+        const messages = window.CONSTANTS?.MESSAGES?.WARNINGS || {
+            MONOTONY_HIGH: 'Monotonie élevée - Varier l\'intensité des entraînements',
+            STRAIN_HIGH: 'Strain très élevé - Risque de surmenage'
+        };
+
         let warning = null;
-        if (monotony > 2.0) {
-            warning = 'Monotonie élevée - Varier l\'intensité des entraînements';
+        if (monotony > thresholds.HIGH) {
+            warning = messages.MONOTONY_HIGH;
         }
-        if (strain > 10000) {
-            warning = 'Strain très élevé - Risque de surmenage';
+        if (strain > thresholds.VERY_HIGH_STRAIN) {
+            warning = messages.STRAIN_HIGH;
         }
 
         return {

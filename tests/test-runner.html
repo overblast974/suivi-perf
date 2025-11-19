@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrainSmart - Test Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #1a202c;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #64748b;
+            margin-bottom: 30px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        #output {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            max-height: 600px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #1a202c;
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .stat-card.passed {
+            border-left-color: #10b981;
+        }
+
+        .stat-card.failed {
+            border-left-color: #ef4444;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #64748b;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 TrainSmart Test Runner</h1>
+        <p class="subtitle">Automated tests for WorkoutCalculations module</p>
+
+        <button id="runTests">▶️ Run All Tests</button>
+
+        <div id="stats" class="stats hidden">
+            <div class="stat-card">
+                <div class="stat-label">Total Tests</div>
+                <div class="stat-value" id="totalTests">0</div>
+            </div>
+            <div class="stat-card passed">
+                <div class="stat-label">Passed</div>
+                <div class="stat-value" id="passedTests">0</div>
+            </div>
+            <div class="stat-card failed">
+                <div class="stat-label">Failed</div>
+                <div class="stat-value" id="failedTests">0</div>
+            </div>
+        </div>
+
+        <div id="output"></div>
+    </div>
+
+    <!-- Load dependencies -->
+    <script src="../constants.js"></script>
+    <script src="../calculations.js"></script>
+    <script src="workout-calculations.test.js"></script>
+
+    <script>
+        const output = document.getElementById('output');
+        const statsDiv = document.getElementById('stats');
+        const runButton = document.getElementById('runTests');
+
+        // Intercept console.log and console.error
+        const originalLog = console.log;
+        const originalError = console.error;
+
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.join(' ');
+            output.textContent += message + '\n';
+        };
+
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            const message = args.join(' ');
+            output.textContent += message + '\n';
+        };
+
+        runButton.addEventListener('click', async () => {
+            // Clear output
+            output.textContent = '';
+            statsDiv.classList.add('hidden');
+            runButton.disabled = true;
+            runButton.textContent = '⏳ Running tests...';
+
+            // Run tests
+            try {
+                const results = await suite.run();
+
+                // Update stats
+                document.getElementById('totalTests').textContent = results.total;
+                document.getElementById('passedTests').textContent = results.passed;
+                document.getElementById('failedTests').textContent = results.failed;
+                statsDiv.classList.remove('hidden');
+
+                runButton.textContent = results.failed === 0 ? '✅ All tests passed!' : `❌ ${results.failed} test(s) failed`;
+            } catch (error) {
+                console.error('Error running tests:', error);
+                runButton.textContent = '❌ Error running tests';
+            } finally {
+                runButton.disabled = false;
+                setTimeout(() => {
+                    runButton.textContent = '▶️ Run All Tests';
+                }, 3000);
+            }
+        });
+
+        // Welcome message
+        output.textContent = '👋 Welcome to TrainSmart Test Runner!\n\nClick "Run All Tests" to execute the test suite.\n\n' +
+                           `WorkoutCalculations module: ${typeof WorkoutCalculations !== 'undefined' ? '✅ Loaded' : '❌ Not loaded'}\n` +
+                           `Test suite: ${typeof suite !== 'undefined' ? '✅ Ready' : '❌ Not ready'}\n`;
+    </script>
+</body>
+</html>

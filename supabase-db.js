@@ -5,6 +5,7 @@ class SupabaseDatabase {
     constructor() {
         this.supabase = window.supabaseClient;
         this.currentUser = null;
+        this.cache = new DataCache();
     }
 
     async init() {
@@ -59,6 +60,10 @@ class SupabaseDatabase {
             .single();
 
         if (error) throw error;
+
+        // Invalidate workouts cache
+        this.cache.invalidate('getAllWorkouts:*');
+
         return data.id;
     }
 
@@ -75,6 +80,13 @@ class SupabaseDatabase {
     }
 
     async getAllWorkouts() {
+        const cacheKey = this.cache.generateKey('getAllWorkouts');
+        const cachedData = this.cache.get(cacheKey);
+
+        if (cachedData) {
+            return cachedData;
+        }
+
         const { data, error } = await this.supabase
             .from('workouts')
             .select('*')
@@ -82,7 +94,12 @@ class SupabaseDatabase {
             .order('date', { ascending: false });
 
         if (error) throw error;
-        return data || [];
+
+        const workouts = data || [];
+        const ttl = this.cache.config?.TTL_WORKOUTS || 60000;
+        this.cache.set(cacheKey, workouts, ttl);
+
+        return workouts;
     }
 
     async updateWorkout(id, workout) {
@@ -93,6 +110,10 @@ class SupabaseDatabase {
             .eq('user_id', this.currentUser.id);
 
         if (error) throw error;
+
+        // Invalidate workouts cache
+        this.cache.invalidate('getAllWorkouts:*');
+        this.cache.invalidate(`getWorkout:${JSON.stringify({id})}`);
     }
 
     async deleteWorkout(id) {
@@ -103,10 +124,21 @@ class SupabaseDatabase {
             .eq('user_id', this.currentUser.id);
 
         if (error) throw error;
+
+        // Invalidate workouts cache
+        this.cache.invalidate('getAllWorkouts:*');
+        this.cache.invalidate(`getWorkout:${JSON.stringify({id})}`);
     }
 
     // Profile methods
     async getProfile() {
+        const cacheKey = this.cache.generateKey('getProfile');
+        const cachedData = this.cache.get(cacheKey);
+
+        if (cachedData) {
+            return cachedData;
+        }
+
         const { data, error } = await this.supabase
             .from('users_profile')
             .select('*')
@@ -119,7 +151,7 @@ class SupabaseDatabase {
         }
 
         // Transform Supabase format to app format
-        return {
+        const profile = {
             userInfo: {
                 name: data.name,
                 age: data.age,
@@ -144,6 +176,11 @@ class SupabaseDatabase {
                 message: data.reminder_message
             }
         };
+
+        const ttl = this.cache.config?.TTL_PROFILE || 300000;
+        this.cache.set(cacheKey, profile, ttl);
+
+        return profile;
     }
 
     async saveProfile(profile) {
@@ -182,6 +219,9 @@ class SupabaseDatabase {
             .eq('user_id', this.currentUser.id);
 
         if (error) throw error;
+
+        // Invalidate profile cache
+        this.cache.invalidate('getProfile:*');
     }
 
     // Goals methods

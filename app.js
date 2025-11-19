@@ -81,6 +81,14 @@ class App {
             this.toggleConditionalFields(e.target.value);
         });
 
+        // Running subtype change - show/hide interval fields
+        const runningSubtypeSelect = document.getElementById('runningSubtype');
+        if (runningSubtypeSelect) {
+            runningSubtypeSelect.addEventListener('change', (e) => {
+                this.toggleIntervalFields(e.target.value);
+            });
+        }
+
         // Type filter tabs
         document.querySelectorAll('.tab[data-type]').forEach(tab => {
             tab.addEventListener('click', (e) => {
@@ -288,7 +296,7 @@ class App {
                         this.exportData();
                         break;
                     case 'import':
-                        this.showToast('Fonctionnalité en développement');
+                        this.importData();
                         break;
                     case 'settings':
                         this.switchView('profile');
@@ -678,26 +686,31 @@ class App {
     }
 
     async loadDashboard() {
-        const workouts = await this.db.getAllWorkouts();
-        // Filter only completed workouts (treat undefined status as completed for backward compatibility)
-        const completedWorkouts = workouts.filter(w => !w.status || w.status === 'completed');
+        try {
+            const workouts = await this.db.getAllWorkouts();
+            // Filter only completed workouts (treat undefined status as completed for backward compatibility)
+            const completedWorkouts = workouts.filter(w => !w.status || w.status === 'completed');
 
-        // Update stats cards
-        const currentMonth = new Date().getMonth();
-        const currentYear = new Date().getFullYear();
+            // Update stats cards
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
 
-        const thisMonthWorkouts = completedWorkouts.filter(w => {
-            const date = new Date(w.date);
-            return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
-        });
+            const thisMonthWorkouts = completedWorkouts.filter(w => {
+                const date = new Date(w.date);
+                return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
+            });
 
-        document.getElementById('musculationCount').textContent =
-            thisMonthWorkouts.filter(w => w.type === 'musculation').length;
-        document.getElementById('runningCount').textContent =
-            thisMonthWorkouts.filter(w => w.type === 'running').length;
+            document.getElementById('musculationCount').textContent =
+                thisMonthWorkouts.filter(w => w.type === 'musculation').length;
+            document.getElementById('runningCount').textContent =
+                thisMonthWorkouts.filter(w => w.type === 'running').length;
 
-        // Load recent workouts
-        this.displayRecentWorkouts(completedWorkouts);
+            // Load recent workouts
+            this.displayRecentWorkouts(completedWorkouts);
+        } catch (error) {
+            console.error('Erreur lors du chargement du tableau de bord:', error);
+            this.showToast('Erreur lors du chargement des données', 'error');
+        }
     }
 
     displayRecentWorkouts(workouts) {
@@ -795,8 +808,13 @@ class App {
     }
 
     async loadWorkouts() {
-        const workouts = await this.db.getAllWorkouts();
-        this.displayWorkouts(workouts, 'all', 'all');
+        try {
+            const workouts = await this.db.getAllWorkouts();
+            this.displayWorkouts(workouts, 'all', 'all');
+        } catch (error) {
+            console.error('Erreur lors du chargement des séances:', error);
+            this.showToast('Erreur lors du chargement des séances', 'error');
+        }
     }
 
     async filterWorkouts(type, status = null) {
@@ -1151,19 +1169,50 @@ class App {
         }
     }
 
+    /**
+     * Update or create a chart - optimized version
+     * @param {string} chartName - Name of the chart in this.charts
+     * @param {HTMLCanvasElement} canvas - Canvas element
+     * @param {Object} config - Chart.js configuration
+     */
+    updateOrCreateChart(chartName, canvas, config) {
+        if (!canvas) return;
+
+        const existingChart = this.charts[chartName];
+
+        if (existingChart && existingChart.data) {
+            // Chart exists, update data
+            existingChart.data.labels = config.data.labels;
+            existingChart.data.datasets.forEach((dataset, i) => {
+                if (config.data.datasets[i]) {
+                    dataset.data = config.data.datasets[i].data;
+                    // Update other dataset properties if needed
+                    if (config.data.datasets[i].label) {
+                        dataset.label = config.data.datasets[i].label;
+                    }
+                    if (config.data.datasets[i].backgroundColor) {
+                        dataset.backgroundColor = config.data.datasets[i].backgroundColor;
+                    }
+                    if (config.data.datasets[i].borderColor) {
+                        dataset.borderColor = config.data.datasets[i].borderColor;
+                    }
+                }
+            });
+            existingChart.update('none'); // 'none' skips animations for better performance
+        } else {
+            // Chart doesn't exist, create it
+            const ctx = canvas.getContext('2d');
+            this.charts[chartName] = new Chart(ctx, config);
+        }
+    }
+
     updateFrequencyChart(workouts, aggregation) {
         const canvas = document.getElementById('frequencyChart');
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.frequency) {
-            this.charts.frequency.destroy();
-        }
-
         const grouped = this.groupWorkoutsByPeriod(workouts, aggregation);
 
-        this.charts.frequency = new Chart(ctx, {
+        const config = {
             type: 'bar',
             data: {
                 labels: grouped.labels,
@@ -1193,39 +1242,30 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('frequency', canvas, config);
     }
 
     updateVolumeChart(workouts, type, aggregation) {
         const canvas = document.getElementById('volumeChart');
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.volume) {
-            this.charts.volume.destroy();
-        }
-
-        let data, label;
+        let label;
+        let grouped;
 
         if (type === 'musculation') {
-            const grouped = this.groupDataByPeriod(workouts, aggregation, 'total_volume');
-            data = grouped.data;
+            grouped = this.groupDataByPeriod(workouts, aggregation, 'total_volume');
             label = 'Volume (kg)';
         } else if (type === 'running') {
-            const grouped = this.groupDataByPeriod(workouts, aggregation, 'distance');
-            data = grouped.data;
+            grouped = this.groupDataByPeriod(workouts, aggregation, 'distance');
             label = 'Distance (km)';
         } else {
-            const grouped = this.groupWorkoutsByPeriod(workouts, aggregation);
-            data = grouped.data;
+            grouped = this.groupWorkoutsByPeriod(workouts, aggregation);
             label = 'Séances';
         }
 
-        const grouped = this.groupDataByPeriod(workouts, aggregation,
-            type === 'musculation' ? 'total_volume' : type === 'running' ? 'distance' : null);
-
-        this.charts.volume = new Chart(ctx, {
+        const config = {
             type: 'line',
             data: {
                 labels: grouped.labels,
@@ -1256,24 +1296,20 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('volume', canvas, config);
     }
 
     updatePerformanceChart(workouts, type) {
         const canvas = document.getElementById('performanceChart');
         if (!canvas) return;
 
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.performance) {
-            this.charts.performance.destroy();
-        }
-
         // This is a placeholder - real implementation would track specific metrics
         const labels = workouts.map(w => new Date(w.date).toLocaleDateString('fr-FR'));
         const data = workouts.map((w, i) => Math.random() * 100); // Placeholder data
 
-        this.charts.performance = new Chart(ctx, {
+        const config = {
             type: 'line',
             data: {
                 labels: labels,
@@ -1303,18 +1339,14 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('performance', canvas, config);
     }
 
     updateACWRTrendChart(workouts) {
         const canvas = document.getElementById('acwrTrendChart');
         if (!canvas || typeof WorkoutCalculations === 'undefined') return;
-
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.acwrTrend) {
-            this.charts.acwrTrend.destroy();
-        }
 
         // Calculate ACWR for each week over the last 12 weeks
         const now = new Date();
@@ -1335,7 +1367,7 @@ class App {
             safeZoneMax.push(1.3);
         }
 
-        this.charts.acwrTrend = new Chart(ctx, {
+        const config = {
             type: 'line',
             data: {
                 labels: weeks,
@@ -1397,18 +1429,14 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('acwrTrend', canvas, config);
     }
 
     updateRPETrendChart(workouts) {
         const canvas = document.getElementById('rpeTrendChart');
         if (!canvas) return;
-
-        const ctx = canvas.getContext('2d');
-
-        if (this.charts.rpeTrend) {
-            this.charts.rpeTrend.destroy();
-        }
 
         // Get last 30 workouts with RPE and Forme data
         const workoutsWithData = workouts
@@ -1428,7 +1456,7 @@ class App {
         const rpeData = workoutsWithData.map(w => w.rpe);
         const formeData = workoutsWithData.map(w => w.forme);
 
-        this.charts.rpeTrend = new Chart(ctx, {
+        const config = {
             type: 'line',
             data: {
                 labels: labels,
@@ -1485,7 +1513,9 @@ class App {
                     }
                 }
             }
-        });
+        };
+
+        this.updateOrCreateChart('rpeTrend', canvas, config);
     }
 
     groupWorkoutsByPeriod(workouts, period) {
@@ -1992,6 +2022,11 @@ class App {
     }
 
     async deleteGoal(goalId) {
+        // Confirmation before deletion
+        if (!confirm('Êtes-vous sûr de vouloir supprimer cet objectif ?')) {
+            return;
+        }
+
         try {
             await this.db.deleteGoal(goalId);
             await this.loadGoals();
@@ -2523,6 +2558,25 @@ class App {
                 field.classList.add('active');
                 field.style.display = 'block';
             }
+
+            // For running, check subtype to show interval fields
+            if (type === 'running') {
+                const runningSubtype = document.getElementById('runningSubtype');
+                if (runningSubtype) {
+                    this.toggleIntervalFields(runningSubtype.value);
+                }
+            }
+        }
+    }
+
+    /**
+     * Toggle interval training fields visibility
+     * @param {string} subtype - Running subtype (endurance or interval)
+     */
+    toggleIntervalFields(subtype) {
+        const intervalFields = document.getElementById('intervalFields');
+        if (intervalFields) {
+            intervalFields.style.display = subtype === 'interval' ? 'block' : 'none';
         }
     }
 
@@ -2530,6 +2584,18 @@ class App {
         const type = document.getElementById('workoutType').value;
         const date = document.getElementById('workoutDate').value;
         const notes = document.getElementById('notes').value;
+
+        // Validation: type is required
+        if (!type) {
+            this.showToast('Veuillez sélectionner un type d\'entraînement', 'error');
+            return;
+        }
+
+        // Validation: date is required
+        if (!date) {
+            this.showToast('Veuillez sélectionner une date', 'error');
+            return;
+        }
 
         const workout = {
             type,
@@ -2543,6 +2609,24 @@ class App {
             if (this.currentExercises.length === 0) {
                 this.showToast('Veuillez ajouter au moins un exercice', 'error');
                 return;
+            }
+
+            // Validation: check that all exercises have valid data
+            for (const exercise of this.currentExercises) {
+                if (!exercise.name || exercise.name.trim() === '') {
+                    this.showToast('Tous les exercices doivent avoir un nom', 'error');
+                    return;
+                }
+                if (!exercise.sets || exercise.sets.length === 0) {
+                    this.showToast(`L'exercice "${exercise.name}" doit avoir au moins une série`, 'error');
+                    return;
+                }
+                for (const set of exercise.sets) {
+                    if (set.reps <= 0 || set.weight < 0) {
+                        this.showToast(`Données invalides pour l'exercice "${exercise.name}"`, 'error');
+                        return;
+                    }
+                }
             }
 
             // Fix field names for Supabase schema
@@ -2561,9 +2645,58 @@ class App {
             const runningSubtype = document.getElementById('runningSubtype').value;
             workout.running_subtype = runningSubtype;
 
-            workout.distance = parseFloat(document.getElementById('distance').value) || 0;
+            // Capture interval data if interval training
+            if (runningSubtype === 'interval') {
+                const intervalReps = parseInt(document.getElementById('intervalReps').value) || 0;
+                const intervalMinutes = parseInt(document.getElementById('intervalMinutes').value) || 0;
+                const intervalSeconds = parseInt(document.getElementById('intervalSeconds').value) || 0;
+                const intervalDistance = parseInt(document.getElementById('intervalDistance').value) || 0;
+                const recoveryMinutes = parseInt(document.getElementById('recoveryMinutes').value) || 0;
+                const recoverySeconds = parseInt(document.getElementById('recoverySeconds').value) || 0;
+
+                // Build interval time string
+                let intervalTime = null;
+                if (intervalMinutes > 0 || intervalSeconds > 0) {
+                    intervalTime = `${intervalMinutes}:${intervalSeconds.toString().padStart(2, '0')}`;
+                }
+
+                // Build recovery time string
+                let recoveryTime = null;
+                if (recoveryMinutes > 0 || recoverySeconds > 0) {
+                    recoveryTime = `${recoveryMinutes}:${recoverySeconds.toString().padStart(2, '0')}`;
+                }
+
+                // Store interval data as JSONB
+                workout.interval_data = {
+                    reps: intervalReps,
+                    interval_time: intervalTime,
+                    interval_distance: intervalDistance,
+                    recovery_time: recoveryTime
+                };
+            }
+
             const runTime = document.getElementById('runTime').value;
+
+            // Validation: runTime is required for running
+            if (!runTime) {
+                this.showToast('Veuillez saisir le temps de course', 'error');
+                return;
+            }
+
+            workout.distance = parseFloat(document.getElementById('distance').value) || 0;
             workout.elevation = parseInt(document.getElementById('elevation').value) || 0;
+
+            // Validation: distance should be positive if provided
+            if (workout.distance < 0) {
+                this.showToast('La distance ne peut pas être négative', 'error');
+                return;
+            }
+
+            // Validation: elevation should be non-negative
+            if (workout.elevation < 0) {
+                this.showToast('Le dénivelé ne peut pas être négatif', 'error');
+                return;
+            }
 
             // Convert runTime (HH:MM:SS) to minutes for duration field
             if (runTime) {
@@ -2594,8 +2727,32 @@ class App {
 
             const rpe = document.getElementById('rpeRun').value;
             const forme = document.getElementById('formeRun').value;
+            const heartRate = document.getElementById('heartRate').value;
+
             workout.rpe = parseInt(rpe);
             workout.forme = parseInt(forme);
+
+            // Add heart rate if provided
+            if (heartRate) {
+                workout.heart_rate = parseInt(heartRate);
+
+                // Validation: heart rate should be reasonable
+                if (workout.heart_rate < 40 || workout.heart_rate > 220) {
+                    this.showToast('La fréquence cardiaque doit être entre 40 et 220 bpm', 'error');
+                    return;
+                }
+            }
+        }
+
+        // Validation: RPE and Forme should be between 1 and 10
+        if (workout.rpe < 1 || workout.rpe > 10) {
+            this.showToast('Le RPE doit être entre 1 et 10', 'error');
+            return;
+        }
+
+        if (workout.forme < 1 || workout.forme > 10) {
+            this.showToast('La forme du jour doit être entre 1 et 10', 'error');
+            return;
         }
 
         // Calculate TRIMP for all workouts
@@ -2752,6 +2909,99 @@ class App {
 
         URL.revokeObjectURL(url);
         this.showToast('Rapport complet exporté avec succès!');
+    }
+
+    /**
+     * Import workout data from JSON file
+     */
+    importData() {
+        // Create hidden file input
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json,.json';
+
+        input.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                const data = JSON.parse(text);
+
+                // Validate data structure
+                if (!data.workouts || !Array.isArray(data.workouts)) {
+                    this.showToast('Format de fichier invalide - clé "workouts" manquante', 'error');
+                    return;
+                }
+
+                // Confirm import
+                const confirmMessage = `Importer ${data.workouts.length} séance(s) ?\n\nAttention : Cette action va ajouter ces séances à votre base de données.`;
+                if (!confirm(confirmMessage)) {
+                    return;
+                }
+
+                // Import workouts
+                let importedCount = 0;
+                let errorCount = 0;
+                const errors = [];
+
+                for (const workout of data.workouts) {
+                    try {
+                        // Validate required fields
+                        if (!workout.type || !workout.date) {
+                            errorCount++;
+                            errors.push(`Séance invalide (type ou date manquant)`);
+                            continue;
+                        }
+
+                        // Remove ID to create new workout
+                        const { id, user_id, created_at, updated_at, planned_at, ...workoutData } = workout;
+
+                        // Set status to completed if not specified
+                        if (!workoutData.status) {
+                            workoutData.status = 'completed';
+                        }
+
+                        // Import the workout
+                        await this.db.addWorkout(workoutData);
+                        importedCount++;
+                    } catch (error) {
+                        errorCount++;
+                        errors.push(`Erreur: ${error.message}`);
+                    }
+                }
+
+                // Show result
+                if (importedCount > 0) {
+                    this.showToast(`${importedCount} séance(s) importée(s) avec succès!`, 'success');
+
+                    // Reload current view to show new data
+                    switch(this.currentView) {
+                        case 'dashboard':
+                            this.loadDashboard();
+                            break;
+                        case 'workouts':
+                            this.loadWorkouts();
+                            break;
+                        case 'program':
+                            this.loadProgram();
+                            break;
+                    }
+                }
+
+                if (errorCount > 0) {
+                    console.error('Import errors:', errors);
+                    this.showToast(`${errorCount} erreur(s) lors de l'import - Voir console`, 'error');
+                }
+
+            } catch (error) {
+                console.error('Import error:', error);
+                this.showToast('Erreur lors de la lecture du fichier', 'error');
+            }
+        });
+
+        // Trigger file selection
+        input.click();
     }
 }
 
